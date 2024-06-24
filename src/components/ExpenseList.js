@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Button, ConfigProvider, Form, Input, Popconfirm, Table } from "antd";
-import { deleteExpenseById, getAllExpenses } from "../services/expenseService";
+import { ConfigProvider, Form, Input, Popconfirm, Table } from "antd";
+import { deleteExpenseById } from "../services/expenseService";
 
 import "./../styles/ExpenseList.css";
 import { DeleteTwoTone } from "@ant-design/icons";
@@ -92,7 +92,6 @@ const ExpenseList = ({ expenseData }) => {
     setDataSource(expenseData);
   }, [expenseData]);
 
-  // getAllExpenses().then((data) => setDataSource(data));
   const handleDelete = (key) => {
     deleteExpenseById(key);
     const newData = dataSource.filter((item) => item._id !== key);

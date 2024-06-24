@@ -30,9 +30,12 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
-        const data = await getAllExpenses();
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const from = new Date(currentYear, currentMonth, 1).toISOString();
+        const to = new Date(currentYear, currentMonth + 1, 0).toISOString();
+        const data = await getExpensesByMonth(from, to);
         setExpenseData(data);
-        // console.log("Data fetched and state updated", data); // Log after setting state
       } catch (error) {
         console.error("Failed to fetch expenses:", error);
       }
@@ -114,7 +117,7 @@ const Dashboard = () => {
           <Menu
             // theme="dark"
             mode="horizontal"
-            defaultSelectedKeys={["2"]}
+            defaultSelectedKeys={[(new Date().getMonth() - 1).toString()]}
             items={items1}
             style={{
               flex: 1,
