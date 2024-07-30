@@ -84,9 +84,14 @@ const EditableCell = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
-const ExpenseList = ({ expenseData }) => {
+const ExpenseList = ({ expenseData, view }) => {
   const [dataSource, setDataSource] = useState(expenseData);
   const [count, setCount] = useState(2);
+  const [editable, setEditable] = useState(false);
+
+  useEffect(() => {
+    setEditable(view === "dashboard");
+  }, [view]);
 
   useEffect(() => {
     setDataSource(expenseData);
@@ -102,14 +107,14 @@ const ExpenseList = ({ expenseData }) => {
     {
       title: "Date",
       dataIndex: "date",
-      editable: true,
+      editable: editable,
       sorter: (a, b) => new Date(a.date) - new Date(b.date),
     },
     {
       title: "Amount",
       dataIndex: "amount",
       width: "20%",
-      editable: true,
+      editable: editable,
       render: (text, record) => {
         const color =
           record.type === "Income"
@@ -123,28 +128,45 @@ const ExpenseList = ({ expenseData }) => {
       },
       sorter: (a, b) => a.amount - b.amount,
     },
+    ...(view === "splitwise"
+      ? [
+          {
+            title: "Owed Share",
+            dataIndex: "owed_share",
+            editable: false,
+          },
+        ]
+      : []),
     {
       title: "Description",
       dataIndex: "description",
-      editable: true,
+      editable: editable,
       sorter: (a, b) => a.description.localeCompare(b.description),
     },
     {
       title: "Expense Type",
       dataIndex: "type",
-      editable: true,
+      editable: editable,
       sorter: (a, b) => a.type.localeCompare(b.type),
+      filters: [
+        { text: "Income", value: "Income" },
+        { text: "Expense", value: "Expense" },
+        { text: "Investment", value: "Investment" },
+      ],
+      filterMode: "tree",
+      filterSearch: true,
+      onFilter: (value, record) => record.type.startsWith(value),
     },
     {
       title: "Category",
       dataIndex: "category",
-      editable: true,
+      editable: editable,
       sorter: (a, b) => a.category.localeCompare(b.category),
     },
     {
       title: "Data Source",
       dataIndex: "source",
-      editable: true,
+      editable: editable,
       sorter: (a, b) => a.source.localeCompare(b.source),
     },
     {

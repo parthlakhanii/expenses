@@ -8,17 +8,16 @@ import {
   CommentOutlined,
   PlusOutlined,
   FileExcelOutlined,
-  MoneyCollectOutlined,
 } from "@ant-design/icons";
 import {
-  getAllExpenses,
   getExpensesByMonth,
   calculateTotals,
+  getSplitWiseExpenseByUserName,
 } from "../services/expenseService";
 import ExpenseTotal from "../components/ExpenseTotal";
 import { Content, Header } from "antd/es/layout/layout";
-
-// class Dashboard extends React.Component {}
+import SideMenu from "../components/SideMenu";
+import { ReactComponent as SplitwiseIcon } from "../styles/splitwise-icon-black.svg";
 
 const Dashboard = () => {
   const [isProcessCSVOpen, setIsProcessCSVOpen] = useState(false);
@@ -26,6 +25,12 @@ const Dashboard = () => {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [expenseData, setExpenseData] = useState([]);
   const [totals, setTotals] = useState(null);
+  const [currentView, setCurrentView] = useState("dashboard");
+  const [selectedMonth, setSelectedMonth] = useState(
+    (new Date().getMonth() - 1).toString()
+  );
+  const USER_NAME = "parth";
+  const USER_ID = "20691939";
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -67,18 +72,37 @@ const Dashboard = () => {
     setIsAddExpenseOpen(true);
   };
 
-  const updateExpenseData = async (month) => {
+  const updateExpenseData = async (month, view) => {
+    console.log("month ", month);
+    console.log("month ", currentView);
+    console.log("view ", view);
     const currentYear = new Date().getFullYear();
-    const from = new Date(currentYear, month.key, 0);
-    const to = new Date(currentYear, parseInt(month.key) + 1, 0);
+    const from = new Date(currentYear, month, 0);
+    const to = new Date(currentYear, parseInt(month) + 1, 0);
+    setCurrentView(view);
+    setSelectedMonth(month);
 
-    console.log(from);
-    console.log(from.toISOString());
-    console.log(to);
+    // console.log(from);
+    // console.log(from.toISOString());
+    // console.log(to);
 
-    setExpenseData(
-      await getExpensesByMonth(from.toISOString(), to.toISOString())
-    );
+    if (view === "splitwise") {
+      setExpenseData(
+        await getSplitWiseExpenseByUserName(
+          from.toISOString(),
+          to.toISOString(),
+          USER_NAME
+        )
+      );
+    } else if (view === "dashboard") {
+      setExpenseData(
+        await getExpensesByMonth(
+          from.toISOString(),
+          to.toISOString(),
+          USER_NAME
+        )
+      );
+    }
   };
 
   const items1 = [
@@ -105,37 +129,44 @@ const Dashboard = () => {
       <Layout
         style={{ minHeight: "100vh", background: "white", headerBg: "white" }}
       >
-        <Header
-          style={{
-            display: "flex",
-            alignItems: "center",
-            background: "white",
-            height: "auto",
-          }}
-        >
-          {/* <div className="demo-logo" /> */}
-          <Menu
-            // theme="dark"
-            mode="horizontal"
-            defaultSelectedKeys={[(new Date().getMonth() - 1).toString()]}
-            items={items1}
+        <SideMenu
+          onMenuClick={(view) => updateExpenseData(selectedMonth, view)}
+        />
+        <Layout>
+          <Header
             style={{
-              flex: 1,
-              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
               background: "white",
+              height: "auto",
             }}
-            onClick={updateExpenseData}
-          />
-          {totals && <ExpenseTotal total={totals} />}
-          {/* <HeaderNavigation /> */}
-        </Header>
-        <Content
-          style={{
-            padding: "0 48px",
-          }}
-        >
-          {expenseData && <ExpenseList expenseData={expenseData} />}
-        </Content>
+          >
+            {/* <div className="demo-logo" /> */}
+            <Menu
+              mode="horizontal"
+              defaultSelectedKeys={selectedMonth}
+              items={items1}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                background: "white",
+              }}
+              onClick={(month) => updateExpenseData(month.key, currentView)}
+            />
+            {totals && <ExpenseTotal total={totals} />}
+            {/* <HeaderNavigation /> */}
+          </Header>
+          <Content
+            style={{
+              padding: "0 48px",
+            }}
+          >
+            {expenseData && (
+              <ExpenseList expenseData={expenseData} view={currentView} />
+            )}
+          </Content>
+        </Layout>
+
         {/* <Row justify="center" align="middle" style={{ minHeight: "100vh" }}> */}
         {/* </Row> */}
       </Layout>
@@ -171,7 +202,7 @@ const Dashboard = () => {
         <FloatButton
           onClick={openImportSW}
           tooltip={<div>Sync Splitwise</div>}
-          icon={<MoneyCollectOutlined />}
+          icon={<SplitwiseIcon />}
         />
         <FloatButton
           onClick={openAddExpense}
