@@ -134,6 +134,7 @@ const ExpenseList = ({ expenseData, view }) => {
             title: "Owed Share",
             dataIndex: "owed_share",
             editable: false,
+            sorter: (a, b) => a.owed_share - b.owed_share,
           },
         ]
       : []),
