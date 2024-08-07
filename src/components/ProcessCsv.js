@@ -5,7 +5,11 @@ import axios from "axios";
 
 const { Option } = Select;
 
-const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
+const CollectionCreateForm = ({
+  initialValues,
+  onFormInstanceReady,
+  onCancel,
+}) => {
   const [form] = Form.useForm();
   useEffect(() => {
     onFormInstanceReady(form);
@@ -34,22 +38,7 @@ const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
       formData.set("CSV", file);
     },
     action: "http://localhost:3001/api/v1/processCsv",
-    // customRequest: (options) => {
-    // 	const data= new FormData()
-    // 	data.append('file', options.file)
-    // 	const config= {
-    // 		"headers": {
-    // 			"content-type": 'multipart/form-data; boundary=----WebKitFormBoundaryqTqJIxvkWFYqvP5s'
-    // 		}
-    // 	}
-    // 	axios.post(options.action, data, config).then((res) => {
-    // 		options.onSuccess(res.data, options.file)
-    // 	}).catch((err) => {
-    // 		console.log(err)
-    // 	})
-    // },
     onChange(info) {
-      // const { status } = info.file;
       const { status, originFileObj } = info.file;
       if (status !== "uploading") {
         console.log(info.file, info.fileList);
@@ -60,35 +49,11 @@ const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
         message.error(`${info.file.name} file upload failed.`);
       }
       console.log("originFileObj ", originFileObj);
-      // handleFileUpload(originFileObj);
     },
     onDrop(e) {
       console.log("Dropped files", e.dataTransfer.files);
     },
   };
-
-  // const handleFileUpload = async (file, fileType) => {
-  //   const formData = new FormData();
-  //   console.log("fileType ", fileType);
-  //   formData.append("csv", file);
-  //   formData.append("type", fileType);
-
-  //   try {
-  //     const response = await axios.post(
-  //       "http://localhost:3001/api/v1/processCsv",
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
-  //     message.success(response.data.message);
-  //   } catch (error) {
-  //     console.error("Error uploading file:", error);
-  //     message.error("File upload failed");
-  //   }
-  // };
 
   const [csvType, setCsvType] = useState(null);
   const [fileSource, setFileSource] = useState("");
@@ -114,6 +79,7 @@ const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
         .then();
       // onSuccess(expenseService.GetAllData());
       message.success("Yay!!");
+      onCancel();
     } catch (error) {
       console.error("Error uploading file:", error);
       message.error("File upload failed");
@@ -127,14 +93,14 @@ const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
       name="form_in_modal"
       initialValues={initialValues}
     >
-      <Form.Item label="Enter file name" name="fileSource">
-        <Input onChange={(e) => setFileSource(e.target.value)} />
-      </Form.Item>
-
       <Form.Item label="Select File Type" name="csvType">
         <Select onChange={handleCsvTypeChange} placeholder="Select file type">
-          <Option value="credit">Credit card</Option>
-          <Option value="chequing">Bank account</Option>
+          <Option value="sc_cred">Scotia Momentum Credit Card</Option>
+          <Option value="sc_cheq">Scotia Bank Account</Option>
+          <Option value="ws_cash">Wealthsimple Cash</Option>
+          <Option value="ws_tfsa">Wealthsimple TFSA</Option>
+          <Option value="ci_cred">CIBC Credit Card</Option>
+
           {/* Add more options as needed */}
         </Select>
       </Form.Item>
@@ -148,11 +114,8 @@ const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
             noStyle
           >
             <Upload.Dragger
-              // {...props}
               name="file"
               multiple={false}
-              // action="http://localhost:3001/api/v1/processCsv"
-              // customRequest={({ onSuccess }) => onSuccess("ok")}
               customRequest={handleUpload}
             >
               <p className="ant-upload-drag-icon">
@@ -171,39 +134,22 @@ const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
     </Form>
   );
 };
-const CollectionCreateFormModal = ({
-  open,
-  onCreate,
-  onCancel,
-  initialValues,
-}) => {
+const CollectionCreateFormModal = ({ open, onCancel, initialValues }) => {
   const [formInstance, setFormInstance] = useState();
   return (
     <Modal
       open={open}
       title="Import CSV"
-      okText="Import"
-      cancelText="Cancel"
-      okButtonProps={{
-        autoFocus: true,
-      }}
-      onCancel={onCancel}
       destroyOnClose
-      onOk={async () => {
-        try {
-          const values = await formInstance?.validateFields();
-          formInstance?.resetFields();
-          onCreate(values);
-        } catch (error) {
-          console.log("Failed:", error);
-        }
-      }}
+      footer={null}
+      onCancel={onCancel}
     >
       <CollectionCreateForm
         initialValues={initialValues}
         onFormInstanceReady={(instance) => {
           setFormInstance(instance);
         }}
+        onCancel={onCancel}
       />
     </Modal>
   );
@@ -220,9 +166,6 @@ const ProcessCSV = ({ open, onClose }) => {
 
   return (
     <>
-      {/* <Button type="primary" onClick={() => setOpen(true)}>
-        New Collection
-      </Button> */}
       <pre>{JSON.stringify(formValues, null, 2)}</pre>
       <CollectionCreateFormModal
         open={open}
