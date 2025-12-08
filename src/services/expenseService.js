@@ -1,11 +1,12 @@
-const USER_ID = 20691939;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const USER_ID = parseInt(process.env.REACT_APP_USER_ID);
 
 const getAllExpenses = async () => {
-  const url = "http://localhost:3001/api/v1/expense";
+  const url = `${API_URL}/api/v1/expense`;
   try {
     const response = await fetch(url);
     const json = await response.json();
-    return json.data;
+    return json.data || [];
   } catch (error) {
     console.error("Error fetching all expenses");
     throw error;
@@ -13,11 +14,11 @@ const getAllExpenses = async () => {
 };
 
 const getExpensesByMonth = async (from, to) => {
-  const url = `http://localhost:3001/api/v1/expense?startDate=${from}&endDate=${to}`;
+  const url = `${API_URL}/api/v1/expense?startDate=${from}&endDate=${to}`;
   try {
     const response = await fetch(url);
     const json = await response.json();
-    return json.data;
+    return json.data || [];
   } catch (error) {
     console.error(`Error fetching expenses form: ${from} to: ${to}`);
     throw error;
@@ -28,6 +29,11 @@ const calculateTotals = async (expenseData) => {
   let totalIncome = 0;
   let totalInvestment = 0;
   let totalOthers = 0;
+
+  if (!expenseData || !Array.isArray(expenseData)) {
+    return { totalExpense: 0, totalIncome: 0, totalInvestment: 0, totalOthers: 0 };
+  }
+
   for (const expense of expenseData) {
     if (expense.type === "Expense") {
       totalExpense += expense.amount;
@@ -39,12 +45,12 @@ const calculateTotals = async (expenseData) => {
       totalOthers += expense.amount;
     }
   }
-  console.log({ totalExpense, totalIncome });
+  console.log({ totalExpense, totalIncome, totalInvestment, totalOthers });
   return { totalExpense, totalIncome, totalInvestment, totalOthers };
 };
 
 const deleteExpenseById = async (id) => {
-  const url = `http://localhost:3001/api/v1/expense/${id}`;
+  const url = `${API_URL}/api/v1/expense/${id}`;
   try {
     const response = await fetch(url, { method: "DELETE" });
     if (!response.ok) {
@@ -58,12 +64,12 @@ const deleteExpenseById = async (id) => {
 };
 
 const getSplitWiseExpenseByUserName = async (from, to, userName) => {
-  const url = `http://localhost:3001/api/v1/splitwise?from=${from}&to=${to}&user=${userName}`;
+  const url = `${API_URL}/api/v1/splitwise?from=${from}&to=${to}&user=${userName}`;
   try {
     const response = await fetch(url);
     const json = await response.json();
-    json.data = normalizeSplitWiseData(json.data);
-    return json.data;
+    const data = json.data || [];
+    return normalizeSplitWiseData(data);
   } catch (error) {
     console.error(`Error fetching Splitwise expenses for user: ${userName}`);
     throw error;

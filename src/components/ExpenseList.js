@@ -5,6 +5,8 @@ import { deleteExpenseById } from "../services/expenseService";
 import "./../styles/ExpenseList.css";
 import { DeleteTwoTone } from "@ant-design/icons";
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
   const [form] = Form.useForm();
@@ -195,7 +197,7 @@ const ExpenseList = ({ expenseData, view }) => {
     setCount(count + 1);
   };
   const handleSave = async (row) => {
-    const url = `http://localhost:3001/api/v1/expense/${row._id}`;
+    const url = `${API_URL}/api/v1/expense/${row._id}`;
     const options = {
       method: "PUT",
       headers: {

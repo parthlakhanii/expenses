@@ -1,70 +1,141 @@
-# Getting Started with Create React App
+# Personal Finance & Expense Tracker
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A React-based personal finance dashboard for tracking expenses across multiple financial accounts and integrating with Splitwise for shared expenses.
+
+## Features
+
+- **Multi-source CSV Import** - Import transactions from:
+  - Scotia Momentum Credit Card
+  - Scotia Bank Account
+  - Wealthsimple Cash
+  - Wealthsimple TFSA
+  - CIBC Credit Card
+
+- **Splitwise Integration** - Sync shared expenses and view personal owed shares
+- **Monthly View** - Browse expenses by month and year with an intuitive date picker
+- **Real-time Statistics** - View totals for expenses, income, investments, and other transactions
+- **Inline Editing** - Edit expense details directly in the table
+- **Category Management** - Organize transactions by type and category
+
+## Prerequisites
+
+- Node.js (v14 or higher)
+- npm or yarn
+- Backend API server (running on port 3001 by default)
+
+## Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd expenses
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` and update with your values:
+   - `REACT_APP_API_URL` - Your backend API URL (default: http://localhost:3001)
+   - `REACT_APP_USER_NAME` - Your Splitwise username
+   - `REACT_APP_USER_ID` - Your Splitwise user ID
+
+4. **Start the development server**
+   ```bash
+   npm start
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Technology Stack
+
+- **Frontend**: React 18.3.1
+- **UI Library**: Ant Design 5.17.3
+- **HTTP Client**: Axios 0.24.0
+- **Date Handling**: Moment.js 2.30.1
+- **Build Tool**: Create React App
+
+## Project Structure
+
+```
+expenses/
+├── src/
+│   ├── components/        # Reusable React components
+│   │   ├── AddExpense.js
+│   │   ├── ExpenseList.js
+│   │   ├── ExpenseTotal.js
+│   │   ├── ProcessCsv.js
+│   │   ├── ImportFromSW.js
+│   │   └── SideMenu.js
+│   ├── pages/            # Page components
+│   │   └── Dashboard.js
+│   ├── services/         # API service layer
+│   │   └── expenseService.js
+│   ├── styles/           # CSS and assets
+│   └── App.js
+├── public/
+├── .env.example          # Environment variable template
+└── SECURITY.md          # Security documentation
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 ### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Runs the app in development mode at [http://localhost:3000](http://localhost:3000)
 
 ### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner in interactive watch mode
 
 ### `npm run build`
+Builds the app for production to the `build` folder
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Security
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Environment Variables**: Never commit your `.env` file
+- **API Keys**: Ensure your backend properly secures Splitwise API keys
+- **Data Privacy**: All financial data is stored locally in your backend database
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+See [SECURITY.md](./SECURITY.md) for detailed security information.
 
-### `npm run eject`
+## Usage
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1. **Import CSV**: Click the floating action button → Import CSV → Select your bank and upload the CSV file
+2. **Sync Splitwise**: Click the floating action button → Sync Splitwise → Select date range
+3. **Add Manual Expense**: Click the floating action button → Add Expense
+4. **Change Month/Year**: Click the date picker in the header to navigate between months
+5. **Edit Expenses**: Click on any field in the Dashboard view to edit inline
+6. **Delete Expenses**: Click the delete icon on any expense row
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Contributing
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+This is a personal project, but contributions are welcome! Please ensure:
+- No hardcoded credentials or API keys
+- Follow existing code style
+- Test changes locally before submitting
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## License
 
-## Learn More
+This project is for personal use.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Troubleshooting
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**App won't start**: Ensure you've created a `.env` file with required variables
 
-### Code Splitting
+**API connection errors**: Verify your backend is running on the configured `REACT_APP_API_URL`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+**Splitwise sync not working**: Check your `REACT_APP_USER_NAME` and `REACT_APP_USER_ID` are correct
 
-### Analyzing the Bundle Size
+## Future Improvements
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- Add authentication/multi-user support
+- Implement proper state management (Redux/Context API)
+- Add comprehensive testing
+- Create production build configuration
+- Add budget tracking features
+- Export data functionality

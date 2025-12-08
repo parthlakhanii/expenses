@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FloatButton, Layout, Row, Col, ConfigProvider, Menu } from "antd";
+import { FloatButton, Layout, DatePicker } from "antd";
 import ProcessCSV from "../components/ProcessCsv";
 import ImportFromSW from "../components/ImportFromSW";
 import AddExpense from "../components/AddExpense";
@@ -18,6 +18,7 @@ import ExpenseTotal from "../components/ExpenseTotal";
 import { Content, Header } from "antd/es/layout/layout";
 import SideMenu from "../components/SideMenu";
 import { ReactComponent as SplitwiseIcon } from "../styles/splitwise-icon-black.svg";
+import moment from "moment";
 
 const Dashboard = () => {
   const [isProcessCSVOpen, setIsProcessCSVOpen] = useState(false);
@@ -26,11 +27,9 @@ const Dashboard = () => {
   const [expenseData, setExpenseData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [currentView, setCurrentView] = useState("dashboard");
-  const [selectedMonth, setSelectedMonth] = useState(
-    (new Date().getMonth() - 1).toString()
-  );
-  const USER_NAME = "parth";
-  const USER_ID = "20691939";
+  const [selectedDate, setSelectedDate] = useState(moment());
+  const USER_NAME = process.env.REACT_APP_USER_NAME;
+  const USER_ID = process.env.REACT_APP_USER_ID;
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -51,14 +50,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const calculateAndSetTotals = async () => {
-      if (expenseData.length > 0) {
-        const calculatedTotals = await calculateTotals(expenseData);
-        setTotals(calculatedTotals);
-      }
+      const calculatedTotals = await calculateTotals(expenseData);
+      setTotals(calculatedTotals);
     };
 
     calculateAndSetTotals();
-  }, [expenseData]); // This effect depends on expenseData
+  }, [expenseData]);
 
   const openProcessCSV = () => {
     setIsProcessCSVOpen(true);
@@ -72,19 +69,13 @@ const Dashboard = () => {
     setIsAddExpenseOpen(true);
   };
 
-  const updateExpenseData = async (month, view) => {
-    console.log("month ", month);
-    console.log("month ", currentView);
-    console.log("view ", view);
-    const currentYear = new Date().getFullYear();
-    const from = new Date(currentYear, month, 0);
-    const to = new Date(currentYear, parseInt(month) + 1, 0);
+  const updateExpenseData = async (date, view) => {
+    const year = date.year();
+    const month = date.month();
+    const from = new Date(year, month, 1);
+    const to = new Date(year, month + 1, 0);
     setCurrentView(view);
-    setSelectedMonth(month);
-
-    // console.log(from);
-    // console.log(from.toISOString());
-    // console.log(to);
+    setSelectedDate(date);
 
     if (view === "splitwise") {
       setExpenseData(
@@ -105,23 +96,12 @@ const Dashboard = () => {
     }
   };
 
-  const items1 = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sept",
-    "Oct",
-    "Nov",
-    "Dec",
-  ].map((index, key) => ({
-    key,
-    label: index,
-  }));
+  const handleDateChange = (date) => {
+    if (date) {
+      updateExpenseData(date, currentView);
+    }
+  };
+
 
   // set expense data in a method before calling Expense List
   return (
@@ -130,31 +110,33 @@ const Dashboard = () => {
         style={{ minHeight: "100vh", background: "white", headerBg: "white" }}
       >
         <SideMenu
-          onMenuClick={(view) => updateExpenseData(selectedMonth, view)}
+          onMenuClick={(view) => updateExpenseData(selectedDate, view)}
         />
         <Layout>
           <Header
             style={{
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               background: "white",
               height: "auto",
+              padding: "16px 48px",
+              borderBottom: "1px solid #f0f0f0",
             }}
           >
-            {/* <div className="demo-logo" /> */}
-            <Menu
-              mode="horizontal"
-              defaultSelectedKeys={selectedMonth}
-              items={items1}
+            <DatePicker
+              value={selectedDate}
+              onChange={handleDateChange}
+              picker="month"
+              format="MMMM YYYY"
+              allowClear={false}
               style={{
-                flex: 1,
-                minWidth: 0,
-                background: "white",
+                minWidth: "200px",
+                fontSize: "16px",
               }}
-              onClick={(month) => updateExpenseData(month.key, currentView)}
+              size="large"
             />
             {totals && <ExpenseTotal total={totals} />}
-            {/* <HeaderNavigation /> */}
           </Header>
           <Content
             style={{

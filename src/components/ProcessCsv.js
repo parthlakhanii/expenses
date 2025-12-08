@@ -4,6 +4,7 @@ import { InboxOutlined } from "@ant-design/icons";
 import axios from "axios";
 
 const { Option } = Select;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 const CollectionCreateForm = ({
   initialValues,
@@ -37,7 +38,7 @@ const CollectionCreateForm = ({
       formData.set("type", "credit");
       formData.set("CSV", file);
     },
-    action: "http://localhost:3001/api/v1/processCsv",
+    action: `${API_URL}/api/v1/processCsv`,
     onChange(info) {
       const { status, originFileObj } = info.file;
       if (status !== "uploading") {
@@ -75,7 +76,7 @@ const CollectionCreateForm = ({
     };
     try {
       const response = await axios
-        .post("http://localhost:3001/api/v1/processCsv", data, config)
+        .post(`${API_URL}/api/v1/processCsv`, data, config)
         .then();
       // onSuccess(expenseService.GetAllData());
       message.success("Yay!!");

@@ -3,6 +3,7 @@ import { DatePicker, Form, Modal } from "antd";
 import moment from "moment";
 
 const { RangePicker } = DatePicker;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
 const CollectionCreateForm = ({ initialValues, onFormInstanceReady }) => {
   const [form] = Form.useForm();
@@ -69,7 +70,7 @@ const ImportFromSW = ({ open, onClose }) => {
   };
 
   const CallSplitWiseAPI = async (from, to) => {
-    const url = `http://localhost:3001/api/v1/splitwise?from=${from}&to=${to}&avoid_duplicates=true`;
+    const url = `${API_URL}/api/v1/splitwise?from=${from}&to=${to}&avoid_duplicates=true`;
     const options = {
       method: "POST",
       headers: {
