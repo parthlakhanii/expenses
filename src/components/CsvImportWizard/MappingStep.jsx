@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Table, Select, Button, Alert, Tag, Space, Input } from 'antd';
 import { CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { Option } = Select;
 
@@ -9,6 +10,8 @@ const { Option } = Select;
  * Allows user to map CSV columns to expense fields
  */
 const MappingStep = ({ sessionData, onNext, onBack }) => {
+  const { isDark } = useTheme();
+
   // Initialize with auto-detected mapping
   const [mapping, setMapping] = useState(sessionData.suggestedMapping || {
     date: null,
@@ -41,6 +44,12 @@ const MappingStep = ({ sessionData, onNext, onBack }) => {
       label: 'Description',
       required: true,
       description: 'What the transaction was for'
+    },
+    {
+      key: 'subDescription',
+      label: 'Sub-Description',
+      required: false,
+      description: 'Additional details (e.g., vendor name, merchant) - improves auto-categorization'
     },
     {
       key: 'type',
@@ -144,7 +153,7 @@ const MappingStep = ({ sessionData, onNext, onBack }) => {
         <span style={{
           fontFamily: 'monospace',
           fontSize: '0.9em',
-          color: text === '-' ? '#999' : '#000'
+          color: text === '-' ? (isDark ? '#94a3b8' : '#999') : (isDark ? '#e2e8f0' : '#1e293b')
         }}>
           {text}
         </span>

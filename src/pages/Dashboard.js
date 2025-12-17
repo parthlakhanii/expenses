@@ -6,13 +6,15 @@ import {
   Button,
   DatePicker,
   Segmented,
+  Row,
+  Col,
+  message,
 } from "antd";
 import CsvImportWizard from "../components/CsvImportWizard";
-import ImportFromSW from "../components/ImportFromSW";
 import AddExpense from "../components/AddExpense";
 import ExpenseList from "../components/ExpenseList";
 import {
-  CommentOutlined,
+  EditOutlined,
   PlusOutlined,
   FileExcelOutlined,
   LeftOutlined,
@@ -25,22 +27,32 @@ import {
   calculateTotals,
   getSplitWiseExpenseByUserName,
 } from "../services/expenseService";
+import { syncSplitwise, getSyncStatus } from "../services/splitwiseSyncService";
 import ExpenseTotal from "../components/ExpenseTotal";
 import { Content, Header } from "antd/es/layout/layout";
-import SideMenu from "../components/SideMenu";
-import { ReactComponent as SplitwiseIcon } from "../styles/splitwise-icon-black.svg";
+import SideNav from "../components/SideNav";
+import { useTheme } from "../contexts/ThemeContext";
+import { ReactComponent as SplitwiseIcon } from "../styles/splitwise-icon.svg";
 import moment from "moment";
+import Budgets from "./Budgets";
+import Reconciliation from "./Reconciliation";
+import SpendingTrendsChart from "../components/SpendingTrendsChart";
+import CategoryBreakdownChart from "../components/CategoryBreakdownChart";
+import TopCategoriesWidget from "../components/TopCategoriesWidget";
 
 const Dashboard = () => {
+  const { isDark } = useTheme();
   const [isCsvImportWizardOpen, setIsCsvImportWizardOpen] = useState(false);
-  const [isImportSWVOpen, setIsImportSWVOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null);
   const [expenseData, setExpenseData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState(moment());
   const [dateMode, setDateMode] = useState("monthly"); // "monthly" or "custom"
   const [customRange, setCustomRange] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const USER_NAME = process.env.REACT_APP_USER_NAME;
   const USER_ID = process.env.REACT_APP_USER_ID;
   const { RangePicker } = DatePicker;
@@ -79,12 +91,39 @@ const Dashboard = () => {
     calculateAndSetTotals();
   }, [expenseData]);
 
-  const openCsvImportWizard = () => {
-    setIsCsvImportWizardOpen(true);
+  useEffect(() => {
+    const fetchSyncStatus = async () => {
+      try {
+        const status = await getSyncStatus();
+        setSyncStatus(status);
+      } catch (error) {
+        console.error("Failed to get sync status:", error);
+      }
+    };
+    fetchSyncStatus();
+  }, []);
+
+  const handleSplitwiseSync = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncSplitwise();
+      message.success(
+        `Synced ${result.recordsProcessed} Splitwise records successfully!`
+      );
+      const status = await getSyncStatus();
+      setSyncStatus(status);
+      if (currentView !== "budgets" && currentView !== "reconciliation") {
+        updateExpenseData(selectedDate, currentView);
+      }
+    } catch (error) {
+      message.error(error.message || "Failed to sync Splitwise data");
+    } finally {
+      setSyncing(false);
+    }
   };
 
-  const openImportSW = () => {
-    setIsImportSWVOpen(true);
+  const openCsvImportWizard = () => {
+    setIsCsvImportWizardOpen(true);
   };
 
   const openAddExpense = () => {
@@ -184,35 +223,78 @@ const Dashboard = () => {
   // set expense data in a method before calling Expense List
   return (
     <>
-      <Layout
-        style={{ minHeight: "100vh", background: "white", headerBg: "white" }}
-      >
-        <SideMenu
-          onMenuClick={(view) => updateExpenseData(selectedDate, view)}
-        />
-        <Layout>
+      <style>
+        {`
+          .month-selector-dropdown .rc-virtual-list-holder {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+          .month-selector-dropdown .rc-virtual-list-holder::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+          }
+          .month-selector-dropdown .rc-virtual-list-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            opacity: 0 !important;
+          }
+        `}
+      </style>
+      <SideNav
+        currentView={currentView}
+        onViewChange={(view) => {
+          setCurrentView(view);
+          if (view !== "budgets" && view !== "reconciliation") {
+            updateExpenseData(selectedDate, view);
+          }
+        }}
+        onCollapse={setSidebarCollapsed}
+      />
+      {currentView === "budgets" ? (
+        <div style={{ marginLeft: sidebarCollapsed ? 80 : 240, transition: "margin-left 0.2s ease" }}>
+          <Budgets />
+        </div>
+      ) : currentView === "reconciliation" ? (
+        <div style={{ marginLeft: sidebarCollapsed ? 80 : 240, transition: "margin-left 0.2s ease" }}>
+          <Reconciliation />
+        </div>
+      ) : (
+        <Layout
+          style={{
+            minHeight: "100vh",
+            marginLeft: sidebarCollapsed ? 80 : 240,
+            background: isDark ? "#0f172a" : "#f8fafc",
+            transition: "margin-left 0.2s ease",
+          }}
+        >
           <Header
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              background: "white",
+              background: isDark ? "#1e293b" : "#ffffff",
               height: "auto",
-              padding: "16px 48px",
-              borderBottom: "1px solid #f0f0f0",
+              padding: "24px 48px",
+              borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
             }}
           >
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "10px",
-              background: "#ffffff",
-              padding: "14px 16px",
-              borderRadius: "12px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
-              border: "1px solid #e5e7eb",
-              width: "380px"
-            }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                background: isDark ? "#0f172a" : "#ffffff",
+                padding: "14px 16px",
+                borderRadius: "12px",
+                boxShadow: isDark
+                  ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
+                  : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+                border: `1px solid ${isDark ? "#334155" : "#e5e7eb"}`,
+                width: "380px",
+              }}
+            >
               <Segmented
                 options={[
                   { label: "Month", value: "monthly" },
@@ -226,9 +308,9 @@ const Dashboard = () => {
                 onChange={handleDateModeChange}
                 block
                 style={{
-                  background: "#f3f4f6",
+                  background: isDark ? "#1e293b" : "#f3f4f6",
                   padding: "4px",
-                  fontWeight: 500
+                  fontWeight: 500,
                 }}
               />
 
@@ -250,48 +332,53 @@ const Dashboard = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "0 8px",
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
+                      background: isDark ? "#1e293b" : "#f9fafb",
+                      border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
                       borderRadius: "8px",
-                      minWidth: "36px"
+                      minWidth: "36px",
                     }}
                   />
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0px",
-                    flex: 1,
-                    background: "#f9fafb",
-                    borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
-                    overflow: "hidden"
-                  }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0px",
+                      flex: 1,
+                      background: isDark ? "#1e293b" : "#f9fafb",
+                      borderRadius: "8px",
+                      border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+                      overflow: "hidden",
+                    }}
+                  >
                     <Select
                       value={selectedDate.month()}
                       onChange={handleMonthChange}
                       style={{
                         flex: 1,
                         fontWeight: 600,
-                        fontSize: "15px"
+                        fontSize: "15px",
                       }}
                       size="large"
                       variant="borderless"
                       options={monthOptions}
                       suffixIcon={null}
                       popupMatchSelectWidth={false}
+                      popupClassName="month-selector-dropdown"
                     />
-                    <div style={{
-                      width: "1px",
-                      height: "24px",
-                      background: "#e5e7eb"
-                    }}></div>
+                    <div
+                      style={{
+                        width: "1px",
+                        height: "24px",
+                        background: isDark ? "#475569" : "#e5e7eb",
+                      }}
+                    ></div>
                     <Select
                       value={selectedDate.year()}
                       onChange={handleYearChange}
                       style={{
                         width: 85,
                         fontWeight: 600,
-                        fontSize: "15px"
+                        fontSize: "15px",
                       }}
                       size="large"
                       variant="borderless"
@@ -312,10 +399,10 @@ const Dashboard = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "0 8px",
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
+                      background: isDark ? "#1e293b" : "#f9fafb",
+                      border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
                       borderRadius: "8px",
-                      minWidth: "36px"
+                      minWidth: "36px",
                     }}
                   />
                 </div>
@@ -326,29 +413,45 @@ const Dashboard = () => {
                   size="large"
                   style={{
                     borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
-                    background: "#f9fafb"
+                    border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+                    background: isDark ? "#1e293b" : "#f9fafb",
                   }}
                   format="MMM DD, YYYY"
                 />
               )}
             </div>
-            {totals && <ExpenseTotal total={totals} />}
+            <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+              {totals && <ExpenseTotal total={totals} />}
+            </div>
           </Header>
           <Content
             style={{
-              padding: "0 48px",
+              padding: "24px 48px",
+              minHeight: "calc(100vh - 128px)",
             }}
           >
+            {/* Charts Section */}
+            <Row gutter={24}>
+              <Col span={24}>
+                <SpendingTrendsChart />
+              </Col>
+            </Row>
+            <Row gutter={24}>
+              <Col xs={24} lg={12}>
+                <CategoryBreakdownChart expenseData={expenseData} />
+              </Col>
+              <Col xs={24} lg={12}>
+                <TopCategoriesWidget expenseData={expenseData} />
+              </Col>
+            </Row>
+
+            {/* Expense List */}
             {expenseData && (
               <ExpenseList expenseData={expenseData} view={currentView} />
             )}
           </Content>
         </Layout>
-
-        {/* <Row justify="center" align="middle" style={{ minHeight: "100vh" }}> */}
-        {/* </Row> */}
-      </Layout>
+      )}
 
       <CsvImportWizard
         open={isCsvImportWizardOpen}
@@ -356,14 +459,10 @@ const Dashboard = () => {
         onSuccess={handleImportSuccess}
       />
 
-      <ImportFromSW
-        open={isImportSWVOpen}
-        onClose={() => setIsImportSWVOpen(false)}
-      />
-
       <AddExpense
         open={isAddExpenseOpen}
         onClose={() => setIsAddExpenseOpen(false)}
+        onSuccess={handleImportSuccess}
       />
 
       <FloatButton.Group
@@ -380,14 +479,24 @@ const Dashboard = () => {
           icon={<FileExcelOutlined />}
         />
         <FloatButton
-          onClick={openImportSW}
-          tooltip={<div>Sync Splitwise</div>}
-          icon={<SplitwiseIcon />}
+          onClick={handleSplitwiseSync}
+          loading={syncing}
+          tooltip={
+            <div>
+              Sync Splitwise
+              {syncStatus && !syncStatus.hasNeverSynced && (
+                <div style={{ fontSize: "11px", opacity: 0.7 }}>
+                  Last: {moment(syncStatus.lastSyncedAt).fromNow()}
+                </div>
+              )}
+            </div>
+          }
+          icon={<SplitwiseIcon className="splitwise-icon-theme" />}
         />
         <FloatButton
           onClick={openAddExpense}
           tooltip={<div>Add Expense</div>}
-          icon={<CommentOutlined />}
+          icon={<EditOutlined />}
         />
       </FloatButton.Group>
     </>

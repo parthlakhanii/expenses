@@ -5,9 +5,83 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body[data-theme="dark"] {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+body[data-theme="light"] {
+  background-color: #f8fafc;
+  color: #1e293b;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Hide scrollbar on month selector dropdown */
+.month-selector-dropdown {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.month-selector-dropdown::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.month-selector-dropdown .rc-virtual-list,
+.month-selector-dropdown .rc-virtual-list-holder,
+.month-selector-dropdown .rc-virtual-list-holder-inner {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.month-selector-dropdown .rc-virtual-list::-webkit-scrollbar,
+.month-selector-dropdown .rc-virtual-list-holder::-webkit-scrollbar,
+.month-selector-dropdown .rc-virtual-list-holder-inner::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.month-selector-dropdown .rc-virtual-list-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+}
+
+/* Splitwise icon theme-aware styling */
+body[data-theme="dark"] .splitwise-icon-theme,
+body[data-theme="dark"] .splitwise-icon-theme svg {
+  fill: #e2e8f0 !important;
+}
+
+body[data-theme="dark"] .splitwise-icon-theme path,
+body[data-theme="dark"] .splitwise-icon-theme g,
+body[data-theme="dark"] .splitwise-icon-theme g path {
+  fill: none !important;
+  stroke: #e2e8f0 !important;
+}
+
+body[data-theme="light"] .splitwise-icon-theme,
+body[data-theme="light"] .splitwise-icon-theme svg {
+  fill: #1e293b !important;
+}
+
+body[data-theme="light"] .splitwise-icon-theme path,
+body[data-theme="light"] .splitwise-icon-theme g,
+body[data-theme="light"] .splitwise-icon-theme g path {
+  fill: none !important;
+  stroke: #1e293b !important;
 }

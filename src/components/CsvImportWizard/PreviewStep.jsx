@@ -6,6 +6,7 @@ import {
   WarningOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const { Text } = Typography;
 
@@ -16,6 +17,7 @@ const API_URL = process.env.REACT_APP_API_URL;
  * Shows transformed data with duplicate detection and statistics
  */
 const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
+  const { isDark } = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [preview, setPreview] = useState([]);
@@ -158,7 +160,7 @@ const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
     return (
       <div style={{ textAlign: 'center', padding: '80px 24px' }}>
         <Spin size="large" />
-        <p style={{ marginTop: 24, color: '#999' }}>
+        <p style={{ marginTop: 24, color: isDark ? '#94a3b8' : '#999' }}>
           Analyzing data...
         </p>
       </div>
@@ -239,7 +241,17 @@ const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
       <style>
         {`
           .duplicate-row {
-            background-color: #fafafa !important;
+            background-color: ${isDark ? 'rgba(251, 191, 36, 0.08)' : '#fff7ed'} !important;
+            border-left: 3px solid ${isDark ? '#fbbf24' : '#f59e0b'} !important;
+            position: relative;
+          }
+
+          .duplicate-row:hover {
+            background-color: ${isDark ? 'rgba(251, 191, 36, 0.12)' : '#ffedd5'} !important;
+          }
+
+          .duplicate-row td {
+            border-color: ${isDark ? 'rgba(251, 191, 36, 0.2)' : '#fed7aa'} !important;
           }
         `}
       </style>

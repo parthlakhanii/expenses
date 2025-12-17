@@ -1,11 +1,20 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { ConfigProvider, Form, Input, Popconfirm, Table } from "antd";
+import {
+  ConfigProvider,
+  Form,
+  Input,
+  Popconfirm,
+  Select,
+  Table,
+  Tag,
+} from "antd";
 import { deleteExpenseById } from "../services/expenseService";
+import { useTheme } from "../contexts/ThemeContext";
 
 import "./../styles/ExpenseList.css";
-import { DeleteTwoTone } from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
@@ -25,6 +34,9 @@ const EditableCell = ({
   dataIndex,
   record,
   handleSave,
+  inputType,
+  categories,
+  options,
   ...restProps
 }) => {
   const [editing, setEditing] = useState(false);
@@ -68,7 +80,26 @@ const EditableCell = ({
           },
         ]}
       >
-        <Input ref={inputRef} onPressEnter={save} onBlur={save} />
+        {inputType === "select" ? (
+          <Select
+            ref={inputRef}
+            onBlur={save}
+            onChange={save}
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+            }
+            options={
+              options ||
+              categories?.map((cat) => ({
+                value: cat.name,
+                label: `${cat.icon} ${cat.name}`,
+              }))
+            }
+          />
+        ) : (
+          <Input ref={inputRef} onPressEnter={save} onBlur={save} />
+        )}
       </Form.Item>
     ) : (
       <div
@@ -87,9 +118,19 @@ const EditableCell = ({
 };
 
 const ExpenseList = ({ expenseData, view }) => {
+  const { isDark } = useTheme();
   const [dataSource, setDataSource] = useState(expenseData);
   const [count, setCount] = useState(2);
   const [editable, setEditable] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  // Expense type options
+  const expenseTypes = [
+    { value: "Expense", label: "💸 Expense", color: "#f87171" },
+    { value: "Income", label: "💰 Income", color: "#34d399" },
+    { value: "Investment", label: "📈 Investment", color: "#60a5fa" },
+    { value: "Transfer", label: "🔄 Transfer", color: "#a78bfa" },
+  ];
 
   useEffect(() => {
     setEditable(view === "dashboard");
@@ -98,6 +139,18 @@ const ExpenseList = ({ expenseData, view }) => {
   useEffect(() => {
     setDataSource(expenseData);
   }, [expenseData]);
+
+  useEffect(() => {
+    // Fetch categories from backend
+    fetch(`${API_URL}/api/v1/categories`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.error_status && data.data?.categories) {
+          setCategories(data.data.categories);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
+  }, []);
 
   const handleDelete = (key) => {
     deleteExpenseById(key);
@@ -120,13 +173,15 @@ const ExpenseList = ({ expenseData, view }) => {
       render: (text, record) => {
         const color =
           record.type === "Income"
-            ? "green"
+            ? "#34d399"
             : record.type === "Expense"
-            ? "red"
+            ? "#f87171"
             : record.type === "Investment"
-            ? "blue"
-            : "gray";
-        return <span style={{ color: color }}>{text}</span>;
+            ? "#60a5fa"
+            : record.type === "Transfer"
+            ? "#a78bfa"
+            : "#d1d5db";
+        return <span style={{ color: color, fontWeight: "500" }}>{text}</span>;
       },
       sorter: (a, b) => a.amount - b.amount,
     },
@@ -145,16 +200,34 @@ const ExpenseList = ({ expenseData, view }) => {
       dataIndex: "description",
       editable: editable,
       sorter: (a, b) => a.description.localeCompare(b.description),
+      render: (text, record) => (
+        <div>
+          <div>{text}</div>
+          {record.subDescription && (
+            <div
+              style={{
+                fontSize: "12px",
+                color: isDark ? "#94a3b8" : "#64748b",
+                marginTop: "2px",
+              }}
+            >
+              {record.subDescription}
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       title: "Expense Type",
       dataIndex: "type",
       editable: editable,
+      inputType: "select",
       sorter: (a, b) => a.type.localeCompare(b.type),
       filters: [
         { text: "Income", value: "Income" },
         { text: "Expense", value: "Expense" },
         { text: "Investment", value: "Investment" },
+        { text: "Transfer", value: "Transfer" },
       ],
       filterMode: "tree",
       filterSearch: true,
@@ -164,7 +237,24 @@ const ExpenseList = ({ expenseData, view }) => {
       title: "Category",
       dataIndex: "category",
       editable: editable,
+      inputType: "select",
       sorter: (a, b) => a.category.localeCompare(b.category),
+      render: (category) => {
+        const cat = categories.find((c) => c.name === category);
+        return cat ? (
+          <Tag
+            color={cat.color}
+            style={{
+              fontSize: "13px",
+              color: "#1e293b",
+            }}
+          >
+            {cat.icon} {cat.name}
+          </Tag>
+        ) : (
+          category
+        );
+      },
     },
     {
       title: "Data Source",
@@ -181,7 +271,13 @@ const ExpenseList = ({ expenseData, view }) => {
             title="Sure to delete?"
             onConfirm={() => handleDelete(record._id)}
           >
-            <DeleteTwoTone />
+            <DeleteOutlined
+              style={{
+                color: isDark ? "#60a5fa" : "#3b82f6",
+                fontSize: "16px",
+                cursor: "pointer",
+              }}
+            />
           </Popconfirm>
         ) : null,
     },
@@ -239,6 +335,9 @@ const ExpenseList = ({ expenseData, view }) => {
         dataIndex: col.dataIndex,
         title: col.title,
         handleSave,
+        inputType: col.inputType,
+        categories: categories,
+        options: col.dataIndex === "type" ? expenseTypes : null,
       }),
     };
   });
@@ -247,8 +346,10 @@ const ExpenseList = ({ expenseData, view }) => {
       theme={{
         components: {
           Table: {
-            /* here is your component tokens */
-            headerBg: "white",
+            headerBg: isDark ? "#1e293b" : "#ffffff",
+            headerColor: isDark ? "#e2e8f0" : "#1e293b",
+            rowHoverBg: isDark ? "#334155" : "#f8fafc",
+            borderColor: isDark ? "#334155" : "#e2e8f0",
           },
         },
       }}
