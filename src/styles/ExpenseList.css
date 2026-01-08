@@ -1,12 +1,12 @@
   .editable-cell {
     position: relative;
   }
-  
+
   .editable-cell-value-wrap {
     padding: 5px 12px;
     cursor: pointer;
   }
-  
+
   .editable-row:hover .editable-cell-value-wrap {
     padding: 4px 11px;
     /* border: 1px solid #d9d9d9;
@@ -15,4 +15,14 @@
 
   .editable-row:active {
     border: none;
+  }
+
+  /* Hide sorting icons by default */
+  .ant-table-column-sorter {
+    display: none !important;
+  }
+
+  /* Show sorting arrow only when column is actively sorted */
+  .ant-table-column-sort .ant-table-column-sorter {
+    display: inline-flex !important;
   }

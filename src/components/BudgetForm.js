@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Modal,
   Form,
@@ -9,36 +9,21 @@ import {
   Space,
   Select,
 } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import { saveBudget, getBudget } from "../services/budgetService";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+import { useCategories } from "../contexts/CategoryContext";
+import moment from "moment";
 
 const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
   const [form] = Form.useForm();
-  const [categories, setCategories] = useState([]);
+  const { categories } = useCategories();
   const [loading, setLoading] = useState(false);
+  const [copyingFromPrevious, setCopyingFromPrevious] = useState(false);
+  const [hasPreviousBudget, setHasPreviousBudget] = useState(false);
+  const [addCategoryFn, setAddCategoryFn] = useState(null);
+  const categoryBudgets = Form.useWatch("categoryBudgets", form);
 
-  useEffect(() => {
-    // Fetch categories
-    fetch(`${API_URL}/api/v1/categories`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error_status && data.data?.categories) {
-          setCategories(data.data.categories);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch categories:", err));
-  }, []);
-
-  useEffect(() => {
-    if (open) {
-      // Load existing budget if available
-      loadBudget();
-    }
-  }, [open, month, year]);
-
-  const loadBudget = async () => {
+  const loadBudget = useCallback(async () => {
     try {
       const budget = await getBudget(month, year);
       if (budget.overallBudget > 0) {
@@ -51,6 +36,61 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
       }
     } catch (error) {
       console.error("Failed to load budget:", error);
+    }
+  }, [month, year, form]);
+
+  const checkPreviousBudget = useCallback(async () => {
+    try {
+      const previousDate = moment()
+        .year(year)
+        .month(month)
+        .subtract(1, "month");
+      const previousMonth = previousDate.month();
+      const previousYear = previousDate.year();
+
+      const budget = await getBudget(previousMonth, previousYear);
+      setHasPreviousBudget(budget.overallBudget > 0);
+    } catch (error) {
+      setHasPreviousBudget(false);
+    }
+  }, [month, year]);
+
+  useEffect(() => {
+    if (open) {
+      // Load existing budget if available
+      loadBudget();
+      checkPreviousBudget();
+    }
+  }, [open, month, year, loadBudget, checkPreviousBudget]);
+
+  const copyFromPreviousMonth = async () => {
+    setCopyingFromPrevious(true);
+    try {
+      const previousDate = moment()
+        .year(year)
+        .month(month)
+        .subtract(1, "month");
+      const previousMonth = previousDate.month();
+      const previousYear = previousDate.year();
+
+      const budget = await getBudget(previousMonth, previousYear);
+
+      if (budget.overallBudget > 0) {
+        form.setFieldsValue({
+          overallBudget: budget.overallBudget,
+          categoryBudgets: budget.categoryBudgets,
+        });
+        message.success(
+          `Copied budget from ${previousDate.format("MMMM YYYY")}`
+        );
+      } else {
+        message.warning("No budget found for previous month");
+      }
+    } catch (error) {
+      console.error("Failed to copy from previous month:", error);
+      message.error("Failed to copy budget from previous month");
+    } finally {
+      setCopyingFromPrevious(false);
     }
   };
 
@@ -91,6 +131,28 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
       okText="Save Budget"
     >
       <Form form={form} layout="vertical" style={{ marginTop: 24 }}>
+        {/* Action Buttons */}
+        <div style={{ display: "flex", gap: "12px", marginBottom: 16 }}>
+          {hasPreviousBudget && (
+            <Button
+              icon={<CopyOutlined />}
+              loading={copyingFromPrevious}
+              onClick={copyFromPreviousMonth}
+              style={{ flex: 1 }}
+            >
+              Copy Previous
+            </Button>
+          )}
+          <Button
+            type="dashed"
+            icon={<PlusOutlined />}
+            onClick={() => addCategoryFn && addCategoryFn()}
+            style={{ flex: 1 }}
+          >
+            Add Category
+          </Button>
+        </div>
+
         {/* Overall Budget */}
         <Form.Item
           label="Overall Monthly Budget"
@@ -109,63 +171,62 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
           />
         </Form.Item>
 
-        <Divider>Category Budgets</Divider>
+        {categoryBudgets && categoryBudgets.length > 0 && (
+          <Divider>Category Budgets</Divider>
+        )}
 
         {/* Category Budgets (dynamic list) */}
         <Form.List name="categoryBudgets">
-          {(fields, { add, remove }) => (
-            <>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space
-                  key={key}
-                  style={{ display: "flex", marginBottom: 8 }}
-                  align="baseline"
-                >
-                  <Form.Item
-                    {...restField}
-                    name={[name, "category"]}
-                    rules={[{ required: true, message: "Select category" }]}
+          {(fields, { add, remove }) => {
+            // Store the add function reference
+            if (!addCategoryFn) {
+              setAddCategoryFn(() => add);
+            }
+
+            return (
+              <>
+                {fields.map(({ key, name, ...restField }) => (
+                  <Space
+                    key={key}
+                    style={{ display: "flex", marginBottom: 8 }}
+                    align="baseline"
                   >
-                    <Select
-                      placeholder="Category"
-                      style={{ width: 200 }}
-                      showSearch
+                    <Form.Item
+                      {...restField}
+                      name={[name, "category"]}
+                      rules={[{ required: true, message: "Select category" }]}
                     >
-                      {categories.map((cat) => (
-                        <Select.Option key={cat.name} value={cat.name}>
-                          {cat.icon} {cat.name}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, "amount"]}
-                    rules={[{ required: true, message: "Enter amount" }]}
-                  >
-                    <InputNumber
-                      prefix="$"
-                      precision={2}
-                      min={0}
-                      placeholder="0.00"
-                      style={{ width: 150 }}
-                    />
-                  </Form.Item>
-                  <DeleteOutlined onClick={() => remove(name)} />
-                </Space>
-              ))}
-              <Form.Item>
-                <Button
-                  type="dashed"
-                  onClick={() => add()}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Add Category Budget
-                </Button>
-              </Form.Item>
-            </>
-          )}
+                      <Select
+                        placeholder="Category"
+                        style={{ width: 200 }}
+                        showSearch
+                      >
+                        {categories.map((cat) => (
+                          <Select.Option key={cat.name} value={cat.name}>
+                            {cat.icon} {cat.name}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                    <Form.Item
+                      {...restField}
+                      name={[name, "amount"]}
+                      rules={[{ required: true, message: "Enter amount" }]}
+                    >
+                      <InputNumber
+                        prefix="$"
+                        precision={2}
+                        min={0}
+                        placeholder="0.00"
+                        style={{ width: 150 }}
+                      />
+                    </Form.Item>
+                    <DeleteOutlined onClick={() => remove(name)} />
+                  </Space>
+                ))}
+              </>
+            );
+          }}
         </Form.List>
       </Form>
     </Modal>

@@ -5,16 +5,19 @@ import {
   CloseCircleOutlined,
   LoadingOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
+import { useStorage } from '../../contexts/StorageContext';
+import { createExpense, getAllExpenses } from '../../services/storageAdapter';
+import { findDuplicates, markDuplicates } from '../../utils/duplicateDetection';
 
 const { Text } = Typography;
-const API_URL = process.env.REACT_APP_API_URL;
 
 /**
  * Step 4: Import Transactions
  * Performs the actual import and shows results
  */
 const ImportStep = ({ sessionId, columnMapping, options, onClose, onRefreshData }) => {
+  const { storageMode } = useStorage();
   const [importing, setImporting] = useState(true);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
@@ -26,6 +29,7 @@ const ImportStep = ({ sessionId, columnMapping, options, onClose, onRefreshData 
       hasImported.current = true;
       performImport();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const performImport = async () => {
@@ -33,23 +37,104 @@ const ImportStep = ({ sessionId, columnMapping, options, onClose, onRefreshData 
     setError(null);
 
     try {
-      const response = await axios.post(`${API_URL}/api/v1/csv/import`, {
-        sessionId,
-        columnMapping,
-        options: {
-          skipDuplicates: options.skipDuplicates,
-          overwriteDuplicates: options.overwriteDuplicates || false,
-          source: options.source || 'CSV Import',
-          paymentType: options.paymentType || 'CSV Import',
-          selectedRowIndices: options.selectedRowIndices || null
-        }
-      });
+      let importResult;
 
-      if (response.data.error_status) {
-        throw new Error(response.data.message || 'Import failed');
+      // Local mode: Get transformed data from server, store to IndexedDB
+      if (storageMode === 'local') {
+        // Step 1: Get all transformed data from server preview endpoint
+        const previewResponse = await axios.post('/api/v1/csv/preview', {
+          sessionId,
+          columnMapping
+        });
+
+        if (previewResponse.data.error_status) {
+          throw new Error(previewResponse.data.message || 'Failed to fetch transformed data');
+        }
+
+        let transformedData = previewResponse.data.data.preview || [];
+
+        // Step 1.5: Do client-side duplicate detection (server checks MongoDB, we need IndexedDB)
+        const existingExpenses = await getAllExpenses();
+        const duplicates = await findDuplicates(transformedData, existingExpenses);
+        transformedData = markDuplicates(transformedData, duplicates);
+
+        console.log(`Import: Found ${duplicates.length} duplicates out of ${transformedData.length} records`);
+
+        // Step 2: Filter data based on options
+        let dataToImport = transformedData;
+
+        // If specific rows selected
+        if (options.selectedRowIndices && Array.isArray(options.selectedRowIndices)) {
+          dataToImport = transformedData.filter(expense =>
+            options.selectedRowIndices.includes(expense._originalIndex)
+          );
+        }
+
+        // Skip duplicates if requested
+        if (options.skipDuplicates) {
+          dataToImport = dataToImport.filter(expense => !expense.isDuplicate);
+        }
+
+        // Step 3: Store each expense to IndexedDB
+        let imported = 0;
+        const duplicatesSkipped = options.skipDuplicates
+          ? transformedData.filter(e => e.isDuplicate).length
+          : 0;
+
+        for (const expense of dataToImport) {
+          try {
+            const expenseToCreate = {
+              date: expense.date,
+              amount: expense.amount,
+              description: expense.description,
+              type: expense.type,
+              category: expense.category || 'Other',
+              source: options.source || 'CSV Import'
+            };
+
+            // Add optional fields
+            if (expense.subDescription) {
+              expenseToCreate.subDescription = expense.subDescription;
+            }
+            if (expense.tags) {
+              expenseToCreate.tags = expense.tags;
+            }
+
+            await createExpense(expenseToCreate);
+            imported++;
+          } catch (error) {
+            console.error('Failed to import expense:', expense, error);
+          }
+        }
+
+        importResult = {
+          imported,
+          duplicatesSkipped,
+          importId: `local_import_${Date.now()}`
+        };
+      }
+      // Cloud mode: Import via server API (server stores to MongoDB)
+      else {
+        const response = await axios.post('/api/v1/csv/import', {
+          sessionId,
+          columnMapping,
+          options: {
+            skipDuplicates: options.skipDuplicates,
+            overwriteDuplicates: options.overwriteDuplicates || false,
+            source: options.source || 'CSV Import',
+            paymentType: options.paymentType || 'CSV Import',
+            selectedRowIndices: options.selectedRowIndices || null
+          }
+        });
+
+        if (response.data.error_status) {
+          throw new Error(response.data.message || 'Import failed');
+        }
+
+        importResult = response.data.data;
       }
 
-      setResult(response.data.data);
+      setResult(importResult);
       setImporting(false);
 
       // Refresh the main data after successful import
@@ -70,7 +155,7 @@ const ImportStep = ({ sessionId, columnMapping, options, onClose, onRefreshData 
     if (!result?.importId) return;
 
     try {
-      await axios.delete(`${API_URL}/api/v1/csv/import/${result.importId}`);
+      await axios.delete(`/api/v1/csv/import/${result.importId}`);
 
       message.success('Import rolled back successfully');
 

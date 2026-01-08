@@ -1,13 +1,10 @@
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+import { API_URL, getAuthHeaders } from '../utils/apiClient';
 
 export const saveBudget = async (month, year, overallBudget, categoryBudgets) => {
   try {
     const response = await fetch(`${API_URL}/api/v1/budget`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ month, year, overallBudget, categoryBudgets }),
     });
     const data = await response.json();
@@ -21,7 +18,10 @@ export const saveBudget = async (month, year, overallBudget, categoryBudgets) =>
 export const getBudget = async (month, year) => {
   try {
     const response = await fetch(
-      `${API_URL}/api/v1/budget?month=${month}&year=${year}`
+      `${API_URL}/api/v1/budget?month=${month}&year=${year}`,
+      {
+        headers: getAuthHeaders(),
+      }
     );
     const data = await response.json();
     return data.data;
@@ -34,7 +34,10 @@ export const getBudget = async (month, year) => {
 export const getBudgetTracking = async (month, year) => {
   try {
     const response = await fetch(
-      `${API_URL}/api/v1/budget/tracking?month=${month}&year=${year}`
+      `${API_URL}/api/v1/budget/tracking?month=${month}&year=${year}`,
+      {
+        headers: getAuthHeaders(),
+      }
     );
     const data = await response.json();
     return data.data;
@@ -48,7 +51,10 @@ export const deleteBudget = async (month, year) => {
   try {
     const response = await fetch(
       `${API_URL}/api/v1/budget?month=${month}&year=${year}`,
-      { method: "DELETE" }
+      {
+        method: "DELETE",
+        headers: getAuthHeaders(),
+      }
     );
     const data = await response.json();
     return data.data;

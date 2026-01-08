@@ -1,25 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { Layout, Button, Select, Row, Col, Statistic, Card, Typography, Alert } from "antd";
+import React, { useEffect, useState, useCallback } from "react";
+import { Layout, Button, Select, Statistic, Card, Alert } from "antd";
 import { LeftOutlined, RightOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
+import { colors } from "../styles/theme";
 import moment from "moment";
 import ReconciliationView from "../components/ReconciliationView";
 import { getUnreconciledTransactions } from "../services/reconciliationService";
 
 const { Header, Content } = Layout;
-const { Title, Text } = Typography;
 
 const Reconciliation = () => {
   const { isDark } = useTheme();
+  const theme = isDark ? colors.dark : colors.light;
   const [selectedDate, setSelectedDate] = useState(moment());
   const [transactions, setTransactions] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, [selectedDate]);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
       const year = selectedDate.year();
@@ -37,7 +34,11 @@ const Reconciliation = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   const handlePreviousMonth = () => {
     setSelectedDate(selectedDate.clone().subtract(1, "month"));
@@ -85,8 +86,8 @@ const Reconciliation = () => {
   };
 
   const cardStyle = {
-    background: isDark ? "#0f172a" : "#ffffff",
-    border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+    background: theme.bg.secondary,
+    border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
     marginBottom: "24px",
   };
@@ -95,7 +96,7 @@ const Reconciliation = () => {
     <Layout
       style={{
         minHeight: "100vh",
-        background: isDark ? "#0f172a" : "#f8fafc",
+        background: theme.bg.primary,
       }}
     >
       <Header
@@ -103,9 +104,10 @@ const Reconciliation = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: isDark ? "#1e293b" : "#ffffff",
-          padding: "24px 48px",
-          borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+          background: theme.bg.primary,
+          padding: "12px 48px 0 48px",
+          height: "auto",
+          border: "none",
         }}
       >
         <div
@@ -113,13 +115,13 @@ const Reconciliation = () => {
             display: "flex",
             gap: "12px",
             alignItems: "center",
-            background: isDark ? "#0f172a" : "#ffffff",
+            background: theme.bg.secondary,
             padding: "14px 16px",
             borderRadius: "12px",
             boxShadow: isDark
               ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
               : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
-            border: `1px solid ${isDark ? "#334155" : "#e5e7eb"}`,
+            border: `1px solid ${theme.border.primary}`,
           }}
         >
           <Button
@@ -132,8 +134,8 @@ const Reconciliation = () => {
               alignItems: "center",
               justifyContent: "center",
               padding: "0 8px",
-              background: isDark ? "#1e293b" : "#f9fafb",
-              border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+              background: theme.bg.tertiary,
+              border: `1px solid ${theme.border.secondary}`,
               borderRadius: "8px",
               minWidth: "36px",
             }}
@@ -143,9 +145,9 @@ const Reconciliation = () => {
               display: "flex",
               alignItems: "center",
               gap: "0px",
-              background: isDark ? "#1e293b" : "#f9fafb",
+              background: theme.bg.tertiary,
               borderRadius: "8px",
-              border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+              border: `1px solid ${theme.border.secondary}`,
               overflow: "hidden",
             }}
           >
@@ -166,7 +168,7 @@ const Reconciliation = () => {
               style={{
                 width: "1px",
                 height: "24px",
-                background: isDark ? "#475569" : "#e5e7eb",
+                background: theme.border.secondary,
               }}
             ></div>
             <Select
@@ -196,39 +198,71 @@ const Reconciliation = () => {
               alignItems: "center",
               justifyContent: "center",
               padding: "0 8px",
-              background: isDark ? "#1e293b" : "#f9fafb",
-              border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+              background: theme.bg.tertiary,
+              border: `1px solid ${theme.border.secondary}`,
               borderRadius: "8px",
               minWidth: "36px",
             }}
           />
         </div>
 
-        <div style={{ display: "flex", gap: "24px" }}>
-          {transactions && (
-            <>
+        {transactions && (
+          <div style={{ display: "flex", gap: "12px" }}>
+            <Card
+              bordered={false}
+              style={{
+                background: theme.bg.secondary,
+                border: `1px solid ${theme.border.primary}`,
+                borderRadius: "12px",
+                minWidth: "180px",
+                boxShadow: isDark
+                  ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
+                  : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+              }}
+              bodyStyle={{
+                padding: "20px",
+              }}
+            >
               <Statistic
                 title="Bank Transactions"
                 value={transactions.bankTransactions?.length || 0}
                 valueStyle={{
-                  color: isDark ? "#e2e8f0" : "#1e293b",
+                  color: theme.text.primary,
                   fontSize: "20px",
+                  fontWeight: 600,
                 }}
               />
+            </Card>
+            <Card
+              bordered={false}
+              style={{
+                background: theme.bg.secondary,
+                border: `1px solid ${theme.border.primary}`,
+                borderRadius: "12px",
+                minWidth: "180px",
+                boxShadow: isDark
+                  ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
+                  : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
+              }}
+              bodyStyle={{
+                padding: "20px",
+              }}
+            >
               <Statistic
                 title="Splitwise Expenses"
                 value={transactions.splitwiseExpenses?.length || 0}
                 valueStyle={{
-                  color: isDark ? "#e2e8f0" : "#1e293b",
+                  color: theme.text.primary,
                   fontSize: "20px",
+                  fontWeight: 600,
                 }}
               />
-            </>
-          )}
-        </div>
+            </Card>
+          </div>
+        )}
       </Header>
 
-      <Content style={{ padding: "24px 48px" }}>
+      <Content style={{ padding: "12px 48px 24px 48px" }}>
         <Alert
           message="Match Splits"
           description="Link your bank transactions with Splitwise expenses you paid for to avoid double-counting. When you pay for a group expense, it appears both in your bank statement and Splitwise. Mark these as matched to exclude your share from budget calculations."
@@ -236,10 +270,10 @@ const Reconciliation = () => {
           icon={<InfoCircleOutlined />}
           showIcon
           style={{
-            marginBottom: "24px",
+            marginBottom: "12px",
             borderRadius: "12px",
-            background: isDark ? "#1e293b" : "#f0f9ff",
-            border: `1px solid ${isDark ? "#334155" : "#bae6fd"}`,
+            background: theme.bg.secondary,
+            border: `1px solid ${theme.border.primary}`,
           }}
         />
         {transactions ? (
@@ -254,7 +288,7 @@ const Reconciliation = () => {
               style={{
                 textAlign: "center",
                 padding: "48px",
-                color: isDark ? "#94a3b8" : "#64748b",
+                color: theme.text.secondary,
               }}
             >
               {loading ? "Loading..." : "No transactions to match"}

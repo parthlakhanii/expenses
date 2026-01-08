@@ -1,9 +1,11 @@
 import React from "react";
 import { Card, Row, Col, Statistic, Progress } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
+import { colors } from "../styles/theme";
 
 const BudgetOverview = ({ overall }) => {
   const { isDark } = useTheme();
+  const theme = isDark ? colors.dark : colors.light;
 
   const getColor = (status) => {
     if (status === "exceeded") return "#f87171"; // Red
@@ -12,25 +14,25 @@ const BudgetOverview = ({ overall }) => {
   };
 
   const cardStyle = {
-    background: isDark ? "#0f172a" : "#ffffff",
-    border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+    background: theme.bg.secondary,
+    border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
-    marginBottom: "24px",
+    marginBottom: "12px",
   };
 
   return (
     <Card bordered={false} style={cardStyle}>
-      <Row gutter={24}>
-        <Col span={8}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={8}>
           <Statistic
             title="Total Budget"
             value={overall.budgeted}
             precision={2}
             prefix="$"
-            valueStyle={{ color: isDark ? "#e2e8f0" : "#1e293b" }}
+            valueStyle={{ color: theme.text.primary }}
           />
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={8}>
           <Statistic
             title="Spent"
             value={overall.spent}
@@ -39,7 +41,7 @@ const BudgetOverview = ({ overall }) => {
             valueStyle={{ color: getColor(overall.status) }}
           />
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={8}>
           <Statistic
             title="Remaining"
             value={overall.remaining}
@@ -51,7 +53,7 @@ const BudgetOverview = ({ overall }) => {
           />
         </Col>
       </Row>
-      <div style={{ marginTop: "24px" }}>
+      <div style={{ marginTop: "16px" }}>
         <Progress
           percent={Math.min(overall.percentage, 100)}
           strokeColor={getColor(overall.status)}

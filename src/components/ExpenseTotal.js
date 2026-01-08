@@ -1,13 +1,25 @@
 import React from "react";
 import { Card, Col, Row, Statistic } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
+import { useResponsive } from "../hooks/useResponsive";
+import { colors } from "../styles/theme";
 
-const ExpenseTotal = ({ total }) => {
+const ExpenseTotal = ({ total, visibleTotals }) => {
   const { isDark } = useTheme();
+  const { isMobile, isTablet } = useResponsive();
+  const theme = isDark ? colors.dark : colors.light;
+
+  // Default to showing all if not specified
+  const totals = visibleTotals || {
+    expense: true,
+    income: true,
+    investment: true,
+    transfer: true,
+  };
 
   const cardStyle = {
-    background: isDark ? "#0f172a" : "#ffffff",
-    border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+    background: theme.bg.secondary,
+    border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
     overflow: "hidden",
   };
@@ -18,82 +30,92 @@ const ExpenseTotal = ({ total }) => {
   };
 
   const titleStyle = {
-    color: isDark ? "#94a3b8" : "#64748b",
+    color: theme.text.secondary,
     fontSize: "13px",
     fontWeight: 500,
   };
 
-  const colStyle = {
-    minWidth: "180px",
+  const valueStyle = {
+    fontSize: "20px",
+    fontWeight: 600,
+    fontVariantNumeric: "tabular-nums",
+    whiteSpace: "nowrap",
   };
 
+  // Use fixed grid on mobile/tablet, flexible auto-sizing on desktop
+  const colProps = isMobile
+    ? { span: 24 }  // Full width on mobile (stacked)
+    : isTablet
+    ? { span: 12 }  // 2 per row on tablet
+    : {};           // Flex on desktop
+
+  const cardStyleWithWidth = isMobile || isTablet
+    ? cardStyle
+    : { ...cardStyle, minWidth: "180px" };
+
   return (
-    <Row gutter={12}>
-      <Col flex="1 1 0" style={colStyle}>
-        <Card bordered={false} style={cardStyle} bodyStyle={cardBodyStyle}>
-          <Statistic
-            title="Expense"
-            value={total.totalExpense}
-            precision={2}
-            valueStyle={{
-              color: "#f87171",
-              fontSize: "20px",
-              fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-            style={{ ...titleStyle }}
-          />
-        </Card>
-      </Col>
-      <Col flex="1 1 0" style={colStyle}>
-        <Card bordered={false} style={cardStyle} bodyStyle={cardBodyStyle}>
-          <Statistic
-            title="Income"
-            value={total.totalIncome}
-            precision={2}
-            valueStyle={{
-              color: "#34d399",
-              fontSize: "20px",
-              fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-          />
-        </Card>
-      </Col>
-      <Col flex="1 1 0" style={colStyle}>
-        <Card bordered={false} style={cardStyle} bodyStyle={cardBodyStyle}>
-          <Statistic
-            title="Investment"
-            value={total.totalInvestment}
-            precision={2}
-            valueStyle={{
-              color: "#60a5fa",
-              fontSize: "20px",
-              fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-          />
-        </Card>
-      </Col>
-      <Col flex="1 1 0" style={colStyle}>
-        <Card bordered={false} style={cardStyle} bodyStyle={cardBodyStyle}>
-          <Statistic
-            title="Transfer"
-            value={total.totalOthers}
-            precision={2}
-            valueStyle={{
-              color: "#a78bfa",
-              fontSize: "20px",
-              fontWeight: 600,
-              fontVariantNumeric: "tabular-nums",
-              whiteSpace: "nowrap",
-            }}
-          />
-        </Card>
-      </Col>
+    <Row gutter={[12, 12]} style={{ display: "flex" }}>
+      {totals.expense && (
+        <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
+          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+            <Statistic
+              title="Expense"
+              value={total.totalExpense}
+              precision={2}
+              valueStyle={{
+                ...valueStyle,
+                color: "#f87171",
+              }}
+              style={{ ...titleStyle }}
+            />
+          </Card>
+        </Col>
+      )}
+      {totals.income && (
+        <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
+          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+            <Statistic
+              title="Income"
+              value={total.totalIncome}
+              precision={2}
+              valueStyle={{
+                ...valueStyle,
+                color: "#34d399",
+              }}
+            />
+          </Card>
+        </Col>
+      )}
+      {totals.investment && (
+        <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
+          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+            <Statistic
+              title="Investment"
+              value={total.totalInvestment}
+              precision={2}
+              valueStyle={{
+                ...valueStyle,
+                color: "#60a5fa",
+              }}
+            />
+          </Card>
+        </Col>
+      )}
+      {totals.transfer && (
+        <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
+          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+            <Statistic
+              title="Transfer"
+              value={total.totalOthers}
+              precision={2}
+              valueStyle={{
+                ...valueStyle,
+                color: "#a78bfa",
+              }}
+            />
+          </Card>
+        </Col>
+      )}
     </Row>
   );
 };

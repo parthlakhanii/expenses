@@ -1,4 +1,4 @@
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+import { API_URL, getAuthHeaders } from '../utils/apiClient';
 
 /**
  * Get unreconciled transactions for a date range
@@ -6,7 +6,10 @@ const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 export const getUnreconciledTransactions = async (from, to) => {
   try {
     const response = await fetch(
-      `${API_URL}/api/v1/reconciliation/unreconciled?from=${from}&to=${to}`
+      `${API_URL}/api/v1/reconciliation/unreconciled?from=${from}&to=${to}`,
+      {
+        headers: getAuthHeaders(),
+      }
     );
     const data = await response.json();
     return data.data;
@@ -25,10 +28,7 @@ export const updateReconciliationStatus = async (transactionId, status) => {
       `${API_URL}/api/v1/reconciliation/status`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ transactionId, status }),
       }
     );
@@ -49,10 +49,7 @@ export const bulkUpdateReconciliationStatus = async (transactionIds, status) => 
       `${API_URL}/api/v1/reconciliation/status/bulk`,
       {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ transactionIds, status }),
       }
     );
@@ -70,7 +67,10 @@ export const bulkUpdateReconciliationStatus = async (transactionIds, status) => 
 export const getReconciliationSuggestions = async (from, to) => {
   try {
     const response = await fetch(
-      `${API_URL}/api/v1/reconciliation/suggestions?from=${from}&to=${to}`
+      `${API_URL}/api/v1/reconciliation/suggestions?from=${from}&to=${to}`,
+      {
+        headers: getAuthHeaders(),
+      }
     );
     const data = await response.json();
     return data.data;

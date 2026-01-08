@@ -3,18 +3,23 @@ import {
   ConfigProvider,
   Form,
   Input,
+  Modal,
   Popconfirm,
   Select,
   Table,
   Tag,
+  Checkbox,
+  Button,
+  Space,
 } from "antd";
-import { deleteExpenseById } from "../services/expenseService";
+
+import { deleteExpenseById, updateExpense } from "../services/storageAdapter";
 import { useTheme } from "../contexts/ThemeContext";
+import { useCategories } from "../contexts/CategoryContext";
+import { colors } from "../styles/theme";
 
 import "./../styles/ExpenseList.css";
-import { DeleteOutlined } from "@ant-design/icons";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
+import { DeleteOutlined, ExclamationCircleOutlined, SearchOutlined } from "@ant-design/icons";
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
@@ -117,12 +122,14 @@ const EditableCell = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
-const ExpenseList = ({ expenseData, view }) => {
+const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
   const { isDark } = useTheme();
+  const theme = isDark ? colors.dark : colors.light;
+  const { categories } = useCategories();
   const [dataSource, setDataSource] = useState(expenseData);
-  const [count, setCount] = useState(2);
   const [editable, setEditable] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [hoveredRowId, setHoveredRowId] = useState(null);
+  const [searchText, setSearchText] = useState("");
 
   // Expense type options
   const expenseTypes = [
@@ -140,22 +147,72 @@ const ExpenseList = ({ expenseData, view }) => {
     setDataSource(expenseData);
   }, [expenseData]);
 
-  useEffect(() => {
-    // Fetch categories from backend
-    fetch(`${API_URL}/api/v1/categories`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error_status && data.data?.categories) {
-          setCategories(data.data.categories);
-        }
+  // Filter data based on search text
+  const filteredData = searchText
+    ? dataSource.filter((item) => {
+        const searchLower = searchText.toLowerCase();
+        return (
+          item.description?.toLowerCase().includes(searchLower) ||
+          item.subDescription?.toLowerCase().includes(searchLower) ||
+          item.category?.toLowerCase().includes(searchLower) ||
+          item.amount?.toString().includes(searchText) ||
+          item.type?.toLowerCase().includes(searchLower) ||
+          item.source?.toLowerCase().includes(searchLower) ||
+          item.date?.includes(searchText)
+        );
       })
-      .catch((err) => console.error("Failed to fetch categories:", err));
-  }, []);
+    : dataSource;
 
   const handleDelete = (key) => {
     deleteExpenseById(key);
     const newData = dataSource.filter((item) => item._id !== key);
     setDataSource(newData);
+  };
+
+  // Custom filter dropdown for Expense Type (without "Select All")
+  const ExpenseTypeFilter = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+    const options = ["Income", "Expense", "Investment", "Transfer"];
+
+    return (
+      <div style={{ padding: 8 }}>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          {options.map(option => (
+            <Checkbox
+              key={option}
+              checked={selectedKeys.includes(option)}
+              onChange={(e) => {
+                const keys = e.target.checked
+                  ? [...selectedKeys, option]
+                  : selectedKeys.filter(k => k !== option);
+                setSelectedKeys(keys);
+              }}
+            >
+              {option}
+            </Checkbox>
+          ))}
+        </Space>
+        <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => confirm()}
+            style={{ flex: 1 }}
+          >
+            OK
+          </Button>
+          <Button
+            size="small"
+            onClick={() => {
+              clearFilters();
+              confirm();
+            }}
+            style={{ flex: 1 }}
+          >
+            Reset
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   const defaultColumns = [
@@ -191,7 +248,6 @@ const ExpenseList = ({ expenseData, view }) => {
             title: "Owed Share",
             dataIndex: "owed_share",
             editable: false,
-            sorter: (a, b) => a.owed_share - b.owed_share,
           },
         ]
       : []),
@@ -199,7 +255,6 @@ const ExpenseList = ({ expenseData, view }) => {
       title: "Description",
       dataIndex: "description",
       editable: editable,
-      sorter: (a, b) => a.description.localeCompare(b.description),
       render: (text, record) => (
         <div>
           <div>{text}</div>
@@ -217,28 +272,23 @@ const ExpenseList = ({ expenseData, view }) => {
         </div>
       ),
     },
-    {
-      title: "Expense Type",
-      dataIndex: "type",
-      editable: editable,
-      inputType: "select",
-      sorter: (a, b) => a.type.localeCompare(b.type),
-      filters: [
-        { text: "Income", value: "Income" },
-        { text: "Expense", value: "Expense" },
-        { text: "Investment", value: "Investment" },
-        { text: "Transfer", value: "Transfer" },
-      ],
-      filterMode: "tree",
-      filterSearch: true,
-      onFilter: (value, record) => record.type.startsWith(value),
-    },
+    ...(visibleColumns.expenseType
+      ? [
+          {
+            title: "Expense Type",
+            dataIndex: "type",
+            editable: editable,
+            inputType: "select",
+            filterDropdown: ExpenseTypeFilter,
+            onFilter: (value, record) => record.type === value,
+          },
+        ]
+      : []),
     {
       title: "Category",
       dataIndex: "category",
       editable: editable,
       inputType: "select",
-      sorter: (a, b) => a.category.localeCompare(b.category),
       render: (category) => {
         const cat = categories.find((c) => c.name === category);
         return cat ? (
@@ -246,7 +296,7 @@ const ExpenseList = ({ expenseData, view }) => {
             color={cat.color}
             style={{
               fontSize: "13px",
-              color: "#1e293b",
+              color: isDark ? "#1e293b" : "#1e293b",
             }}
           >
             {cat.icon} {cat.name}
@@ -256,67 +306,126 @@ const ExpenseList = ({ expenseData, view }) => {
         );
       },
     },
-    {
-      title: "Data Source",
-      dataIndex: "source",
-      editable: editable,
-      sorter: (a, b) => a.source.localeCompare(b.source),
-    },
+    ...(visibleColumns.dataSource
+      ? [
+          {
+            title: "Data Source",
+            dataIndex: "source",
+            editable: editable,
+            render: (source, record) => (
+              <div>
+                {source}
+                {record.manuallyEdited && record.source === "Splitwise" && (
+                  <Tag
+                    color="orange"
+                    style={{
+                      marginLeft: "8px",
+                      fontSize: "11px",
+                    }}
+                  >
+                    Edited
+                  </Tag>
+                )}
+              </div>
+            ),
+          },
+        ]
+      : []),
     {
       title: "",
       dataIndex: "operation",
       render: (_, record) =>
-        dataSource.length >= 1 ? (
+        filteredData.length >= 1 ? (
           <Popconfirm
             title="Sure to delete?"
             onConfirm={() => handleDelete(record._id)}
           >
             <DeleteOutlined
               style={{
-                color: isDark ? "#60a5fa" : "#3b82f6",
+                color: colors.accent.error,
                 fontSize: "16px",
                 cursor: "pointer",
+                visibility: hoveredRowId === record._id ? "visible" : "hidden",
+                opacity: hoveredRowId === record._id ? 1 : 0,
+                transition: "opacity 0.2s ease, visibility 0.2s ease",
               }}
             />
           </Popconfirm>
         ) : null,
     },
   ];
-  const handleAdd = () => {
-    const newData = {
-      key: count,
-      name: `Edward King ${count}`,
-      age: "32",
-      address: `London, Park Lane no. ${count}`,
-    };
-    setDataSource([...dataSource, newData]);
-    setCount(count + 1);
-  };
-  const handleSave = async (row) => {
-    const url = `${API_URL}/api/v1/expense/${row._id}`;
-    const options = {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(row),
-    };
 
-    fetch(url, options)
-      .then((response) => response.json())
-      .then((json) => {
-        const newData = [...dataSource];
-        const index = newData.findIndex((item) => json.data.id === item.id);
-        console.log("index of the data => ", index);
+  const handleSave = async (row) => {
+    // Find the original record to compare values
+    const originalRecord = dataSource.find((item) => item._id === row._id);
+
+    if (!originalRecord) {
+      console.warn("Original record not found for comparison");
+      return;
+    }
+
+    // Compare editable fields to check if anything actually changed
+    // Use String() and parseFloat() to handle type differences
+    const hasChanges =
+      String(originalRecord.date || "") !== String(row.date || "") ||
+      parseFloat(originalRecord.amount || 0) !== parseFloat(row.amount || 0) ||
+      String(originalRecord.description || "") !==
+        String(row.description || "") ||
+      String(originalRecord.type || "") !== String(row.type || "") ||
+      String(originalRecord.category || "") !== String(row.category || "") ||
+      String(originalRecord.source || "") !== String(row.source || "");
+
+    // Skip API call if nothing changed
+    if (!hasChanges) {
+      console.log("No changes detected, skipping API call");
+      return;
+    }
+
+    // Check if this is a Splitwise transaction
+    const isSplitwiseTransaction = row.source === "Splitwise";
+
+    // If it's a Splitwise transaction, show warning modal
+    if (isSplitwiseTransaction) {
+      Modal.confirm({
+        title: "Edit Splitwise Transaction",
+        icon: <ExclamationCircleOutlined />,
+        content:
+          "This transaction is from Splitwise. If you edit it, this record will no longer sync with Splitwise updates. Are you sure you want to proceed?",
+        okText: "Yes, Edit",
+        cancelText: "Cancel",
+        onOk: async () => {
+          await saveExpense({ ...row, manuallyEdited: true });
+        },
+      });
+    } else {
+      await saveExpense(row);
+    }
+  };
+
+  const saveExpense = async (row) => {
+    try {
+      const result = await updateExpense(row._id, row);
+
+      // Handle both cloud mode (returns { data: expense }) and local mode (returns expense directly)
+      const updatedExpense = result.data || result;
+
+      const newData = [...dataSource];
+      // Use _id for matching (works for both cloud and local mode)
+      const index = newData.findIndex((item) => item._id === row._id);
+
+      if (index !== -1) {
         const item = newData[index];
         newData.splice(index, 1, {
           ...item,
-          ...json.data,
+          ...updatedExpense,
         });
         setDataSource(newData);
-      });
+      }
+    } catch (error) {
+      console.error("Failed to update expense:", error);
+    }
   };
+
   const components = {
     body: {
       row: EditableRow,
@@ -342,37 +451,41 @@ const ExpenseList = ({ expenseData, view }) => {
     };
   });
   return (
-    <ConfigProvider
-      theme={{
-        components: {
-          Table: {
-            headerBg: isDark ? "#1e293b" : "#ffffff",
-            headerColor: isDark ? "#e2e8f0" : "#1e293b",
-            rowHoverBg: isDark ? "#334155" : "#f8fafc",
-            borderColor: isDark ? "#334155" : "#e2e8f0",
+    <>
+      <Input
+        prefix={<SearchOutlined style={{ color: theme.text.secondary }} />}
+        placeholder="Search expenses..."
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        style={{ marginBottom: 12, maxWidth: 500 }}
+        allowClear
+        size="large"
+      />
+      <ConfigProvider
+        theme={{
+          components: {
+            Table: {
+              headerBg: theme.bg.secondary,
+              headerColor: theme.text.primary,
+              rowHoverBg: theme.bg.tertiary,
+              borderColor: theme.border.primary,
+            },
           },
-        },
-      }}
-    >
-      <div>
-        {/* <Button
-        onClick={handleAdd}
-        type="primary"
-        style={{
-          marginBottom: 16,
         }}
       >
-        Add a row
-      </Button> */}
         <Table
           components={components}
           rowClassName={() => "editable-row"}
-          // bordered
-          dataSource={dataSource}
+          dataSource={filteredData}
           columns={columns}
+          showSorterTooltip={false}
+          onRow={(record) => ({
+            onMouseEnter: () => setHoveredRowId(record._id),
+            onMouseLeave: () => setHoveredRowId(null),
+          })}
         />
-      </div>
-    </ConfigProvider>
+      </ConfigProvider>
+    </>
   );
 };
 export default ExpenseList;

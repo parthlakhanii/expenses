@@ -73,7 +73,7 @@ const TopNav = ({ currentView, onViewChange }) => {
           letterSpacing: '-0.5px',
         }}
       >
-        Expense Tracker
+        Expenses
       </div>
 
       {/* Navigation */}

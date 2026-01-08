@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Row, Col } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
+import { colors } from "../styles/theme";
 import {
   BarChart,
   Bar,
@@ -17,12 +18,13 @@ import {
 
 const BudgetCharts = ({ categories }) => {
   const { isDark } = useTheme();
+  const theme = isDark ? colors.dark : colors.light;
 
   const cardStyle = {
-    background: isDark ? "#0f172a" : "#ffffff",
-    border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+    background: theme.bg.secondary,
+    border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
-    marginBottom: "24px",
+    marginBottom: "0px",
   };
 
   // Prepare data for bar chart (budgeted vs spent)
@@ -54,9 +56,9 @@ const BudgetCharts = ({ categories }) => {
   ];
 
   return (
-    <Row gutter={24}>
+    <Row gutter={[16, 12]} style={{ marginBottom: 12 }}>
       {/* Bar Chart: Budgeted vs Spent */}
-      <Col span={12}>
+      <Col xs={24} sm={24} md={12}>
         <Card title="Budget vs Actual" bordered={false} style={cardStyle}>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={barData}>
@@ -73,7 +75,7 @@ const BudgetCharts = ({ categories }) => {
       </Col>
 
       {/* Pie Chart: Spending Distribution */}
-      <Col span={12}>
+      <Col xs={24} sm={24} md={12}>
         <Card title="Spending by Category" bordered={false} style={cardStyle}>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>

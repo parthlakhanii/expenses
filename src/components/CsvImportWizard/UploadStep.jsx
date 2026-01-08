@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Upload, Alert } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 
 const { Dragger } = Upload;
-
-const API_URL = process.env.REACT_APP_API_URL;
 
 /**
  * Step 1: Upload CSV File
@@ -26,11 +24,12 @@ const UploadStep = ({ onNext }) => {
       setError(null);
 
       try {
+        // Always upload to server for parsing (same logic for both modes)
         const formData = new FormData();
         formData.append('file', file);
 
         const response = await axios.post(
-          `${API_URL}/api/v1/csv/upload`,
+          '/api/v1/csv/upload',
           formData,
           {
             headers: {
@@ -45,8 +44,6 @@ const UploadStep = ({ onNext }) => {
 
         setUploading(false);
         onSuccess(response.data);
-
-        // Proceed to next step with upload data
         onNext(response.data.data);
 
       } catch (err) {

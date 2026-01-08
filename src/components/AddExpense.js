@@ -8,27 +8,16 @@ import {
   DatePicker,
   message,
 } from "antd";
-import { useTheme } from "../contexts/ThemeContext";
+import { useCategories } from "../contexts/CategoryContext";
+import { useResponsive } from "../hooks/useResponsive";
+import { createExpense } from "../services/storageAdapter";
 import moment from "moment";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
 const AddExpense = ({ open, onClose, onSuccess }) => {
   const [form] = Form.useForm();
-  const [categories, setCategories] = useState([]);
+  const { categories } = useCategories();
+  const { isMobile } = useResponsive();
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Fetch categories on mount
-    fetch(`${API_URL}/api/v1/categories`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.error_status && data.data?.categories) {
-          setCategories(data.data.categories);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch categories:", err));
-  }, []);
 
   useEffect(() => {
     if (open) {
@@ -48,36 +37,25 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
       setLoading(true);
 
       // Format the expense data
+      // If category is not selected, send undefined - backend will auto-categorize
       const expenseData = {
         date: values.date.format("YYYY-MM-DD"),
         amount: values.amount,
         description: values.description,
         type: values.type,
-        category: values.category || "Other",
+        category: values.category, // undefined if not selected
         source: values.source || "Manual Entry",
       };
 
-      // Send to backend
-      const response = await fetch(`${API_URL}/api/v1/expense`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(expenseData),
-      });
+      // Send to backend for categorization and storage
+      // Backend handles both cloud and local mode appropriately
+      await createExpense(expenseData);
 
-      const result = await response.json();
-
-      if (!result.error_status) {
-        message.success("Expense added successfully!");
-        form.resetFields();
-        onClose();
-        if (onSuccess) {
-          onSuccess();
-        }
-      } else {
-        message.error(result.error_message || "Failed to add expense");
+      message.success("Expense added successfully!");
+      form.resetFields();
+      onClose();
+      if (onSuccess) {
+        onSuccess();
       }
     } catch (error) {
       console.error("Error adding expense:", error);
@@ -94,7 +72,7 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
       onCancel={onClose}
       onOk={handleSubmit}
       confirmLoading={loading}
-      width={600}
+      width={isMobile ? "90vw" : 600}
       okText="Add Expense"
       cancelText="Cancel"
       destroyOnClose

@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  FloatButton,
   Layout,
   Select,
   Button,
@@ -14,48 +13,108 @@ import CsvImportWizard from "../components/CsvImportWizard";
 import AddExpense from "../components/AddExpense";
 import ExpenseList from "../components/ExpenseList";
 import {
-  EditOutlined,
-  PlusOutlined,
-  FileExcelOutlined,
   LeftOutlined,
   RightOutlined,
   CalendarOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 
 import {
   getExpensesByMonth,
   calculateTotals,
-  getSplitWiseExpenseByUserName,
-} from "../services/expenseService";
-import { syncSplitwise, getSyncStatus } from "../services/splitwiseSyncService";
+} from "../services/storageAdapter";
+import { getSplitWiseExpenseByUserName } from "../services/expenseService";
+import { syncSplitwise, syncSplitwiseToLocal, getSyncStatus } from "../services/splitwiseSyncService";
 import ExpenseTotal from "../components/ExpenseTotal";
 import { Content, Header } from "antd/es/layout/layout";
 import SideNav from "../components/SideNav";
 import { useTheme } from "../contexts/ThemeContext";
-import { ReactComponent as SplitwiseIcon } from "../styles/splitwise-icon.svg";
+import { useSettings } from "../contexts/SettingsContext";
+import { useStorage } from "../contexts/StorageContext";
+import { useResponsive } from "../hooks/useResponsive";
 import moment from "moment";
 import Budgets from "./Budgets";
 import Reconciliation from "./Reconciliation";
+import Settings from "./Settings";
+import Categories from "./Categories";
+import Profile from "./Profile";
 import SpendingTrendsChart from "../components/SpendingTrendsChart";
 import CategoryBreakdownChart from "../components/CategoryBreakdownChart";
-import TopCategoriesWidget from "../components/TopCategoriesWidget";
+import SplitwiseSyncModal from "../components/SplitwiseSyncModal";
+import { colors } from "../styles/theme";
 
 const Dashboard = () => {
   const { isDark } = useTheme();
+  const { enableSplitwise, visibleColumns, visibleTotals } = useSettings();
+  const { storageMode } = useStorage();
+  const { isMobile } = useResponsive();
+  const theme = isDark ? colors.dark : colors.light;
   const [isCsvImportWizardOpen, setIsCsvImportWizardOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
+  const [lastSyncStatus, setLastSyncStatus] = useState(null);
   const [expenseData, setExpenseData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [currentView, setCurrentView] = useState("dashboard");
   const [selectedDate, setSelectedDate] = useState(moment());
   const [dateMode, setDateMode] = useState("monthly"); // "monthly" or "custom"
   const [customRange, setCustomRange] = useState(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
+
   const USER_NAME = process.env.REACT_APP_USER_NAME;
-  const USER_ID = process.env.REACT_APP_USER_ID;
   const { RangePicker } = DatePicker;
+
+  // Update expense data based on date and view
+  const updateExpenseData = useCallback(async (date, view) => {
+    const year = date.year();
+    const month = date.month();
+    // Use YYYY-MM-DD format strings instead of ISO strings to avoid timezone issues
+    const from = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const to = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      lastDay
+    ).padStart(2, "0")}`;
+    setCurrentView(view);
+    setSelectedDate(date);
+
+    if (view === "splitwise") {
+      setExpenseData(await getSplitWiseExpenseByUserName(from, to, USER_NAME));
+    } else if (view === "dashboard") {
+      setExpenseData(await getExpensesByMonth(from, to, USER_NAME));
+    }
+  }, [USER_NAME]);
+
+  // Fetch sync status
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const status = await getSyncStatus();
+      setSyncStatus(status);
+
+      // If sync just completed, auto-refresh data and show message (only for background/first sync)
+      if (lastSyncStatus?.status === "in_progress" && status.status === "success") {
+        // Only show toast if it was a background sync (first sync)
+        // For subsequent syncs, the message is shown immediately in handleSplitwiseSync
+        const wasFirstSync = lastSyncStatus?.hasNeverSynced || !lastSyncStatus?.lastSyncedAt;
+        if (wasFirstSync) {
+          message.success(
+            `First sync complete! ${status.recordsProcessed} records synced successfully.`
+          );
+        }
+
+        if (currentView !== "budgets" && currentView !== "reconciliation" && currentView !== "settings" && currentView !== "categories") {
+          updateExpenseData(selectedDate, currentView);
+        }
+      }
+
+      setLastSyncStatus(status);
+      return status;
+    } catch (error) {
+      console.error("Failed to get sync status:", error);
+    }
+  }, [lastSyncStatus, currentView, selectedDate, updateExpenseData]);
 
   useEffect(() => {
     const fetchExpenses = async () => {
@@ -91,32 +150,120 @@ const Dashboard = () => {
     calculateAndSetTotals();
   }, [expenseData]);
 
+  // Fetch sync status on mount
   useEffect(() => {
-    const fetchSyncStatus = async () => {
-      try {
-        const status = await getSyncStatus();
-        setSyncStatus(status);
-      } catch (error) {
-        console.error("Failed to get sync status:", error);
+    fetchSyncStatus();
+  }, [fetchSyncStatus]);
+
+  // Auto-check on page visibility change (hybrid approach)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && syncStatus?.status === "in_progress") {
+        fetchSyncStatus();
       }
     };
-    fetchSyncStatus();
-  }, []);
 
-  const handleSplitwiseSync = async () => {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [syncStatus, fetchSyncStatus]);
+
+  // Show sync modal to select date range
+  const handleSplitwiseSync = () => {
+    setIsSyncModalOpen(true);
+  };
+
+  // Perform actual sync with selected date range
+  const performSplitwiseSync = async (startDate, endDate) => {
+    setIsSyncModalOpen(false);
     setSyncing(true);
+
     try {
-      const result = await syncSplitwise();
-      message.success(
-        `Synced ${result.recordsProcessed} Splitwise records successfully!`
-      );
-      const status = await getSyncStatus();
-      setSyncStatus(status);
-      if (currentView !== "budgets" && currentView !== "reconciliation") {
-        updateExpenseData(selectedDate, currentView);
+      const isFirstSync = syncStatus?.hasNeverSynced || !syncStatus?.lastSyncedAt;
+      const isLocalMode = storageMode === 'local';
+
+      const dateRangeText = startDate && endDate
+        ? ` from ${startDate} to ${endDate}`
+        : startDate
+        ? ` from ${startDate}`
+        : '';
+
+      if (isFirstSync) {
+        // First sync: Non-blocking (background)
+        const syncFunction = isLocalMode ? syncSplitwiseToLocal : syncSplitwise;
+
+        syncFunction(startDate, endDate).catch((error) => {
+          console.error("Sync error:", error);
+          message.error(error.message || "Failed to start Splitwise sync");
+        });
+
+        // Show background message for first sync
+        message.info(
+          `Splitwise sync started in background${isLocalMode ? ' and will be stored locally' : ''}${dateRangeText}. This may take a while if you have a lot of records. You can continue using the app.`,
+          5
+        );
+
+        // Update status after a moment to show "in_progress"
+        setTimeout(() => {
+          fetchSyncStatus();
+        }, 2000);
+      } else {
+        // Subsequent sync: Blocking (await response)
+        message.loading({
+          content: `Syncing Splitwise data${isLocalMode ? ' to local storage' : ''}${dateRangeText}...`,
+          key: "splitwise-sync"
+        });
+
+        // Use appropriate sync function based on storage mode
+        if (isLocalMode) {
+          const result = await syncSplitwiseToLocal(startDate, endDate);
+
+          // Fetch updated status to refresh the banner
+          await fetchSyncStatus();
+
+          // Show detailed message for local mode
+          message.success({
+            content: result.synced > 0
+              ? `${result.synced} new Splitwise expense(s) synced to local storage`
+              : 'All Splitwise expenses are up to date',
+            key: "splitwise-sync",
+            duration: 3,
+          });
+        } else {
+          await syncSplitwise(startDate, endDate);
+
+          // Fetch updated status
+          const updatedStatus = await fetchSyncStatus();
+
+          // Show success message with record count
+          if (updatedStatus?.status === "success") {
+            message.success({
+              content: `Sync complete! ${updatedStatus.recordsProcessed || 0} records synced.`,
+              key: "splitwise-sync",
+              duration: 3,
+            });
+          } else if (updatedStatus?.status === "failed") {
+            message.error({
+              content: updatedStatus.errorMessage || "Sync failed",
+              key: "splitwise-sync",
+              duration: 5,
+            });
+          }
+        }
+
+        // Refresh expense data for both local and cloud mode
+        if (currentView !== "budgets" && currentView !== "reconciliation" && currentView !== "settings" && currentView !== "categories") {
+          updateExpenseData(selectedDate, currentView);
+        }
       }
     } catch (error) {
-      message.error(error.message || "Failed to sync Splitwise data");
+      message.error({
+        content: error.message || "Failed to sync Splitwise",
+        key: "splitwise-sync",
+        duration: 5,
+      });
     } finally {
       setSyncing(false);
     }
@@ -133,25 +280,8 @@ const Dashboard = () => {
   const handleImportSuccess = () => {
     // Refresh expense data after successful import
     updateExpenseData(selectedDate, currentView);
-  };
-
-  const updateExpenseData = async (date, view) => {
-    const year = date.year();
-    const month = date.month();
-    // Use YYYY-MM-DD format strings instead of ISO strings to avoid timezone issues
-    const from = `${year}-${String(month + 1).padStart(2, "0")}-01`;
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const to = `${year}-${String(month + 1).padStart(2, "0")}-${String(
-      lastDay
-    ).padStart(2, "0")}`;
-    setCurrentView(view);
-    setSelectedDate(date);
-
-    if (view === "splitwise") {
-      setExpenseData(await getSplitWiseExpenseByUserName(from, to, USER_NAME));
-    } else if (view === "dashboard") {
-      setExpenseData(await getExpensesByMonth(from, to, USER_NAME));
-    }
+    // Trigger chart refresh
+    setChartRefreshTrigger(prev => prev + 1);
   };
 
   const handleMonthChange = (month) => {
@@ -250,49 +380,89 @@ const Dashboard = () => {
             updateExpenseData(selectedDate, view);
           }
         }}
-        onCollapse={setSidebarCollapsed}
+        enableSplitwise={enableSplitwise}
+        mobileOpen={mobileDrawerOpen}
+        onMobileClose={() => setMobileDrawerOpen(false)}
+        onQuickAddSuccess={handleImportSuccess}
+        onAddExpense={openAddExpense}
+        onImportCSV={openCsvImportWizard}
+        onSplitwiseSync={handleSplitwiseSync}
+        syncing={syncing}
+        syncStatus={syncStatus}
       />
       {currentView === "budgets" ? (
-        <div style={{ marginLeft: sidebarCollapsed ? 80 : 240, transition: "margin-left 0.2s ease" }}>
+        <div style={{ marginLeft: isMobile ? 0 : 80 }}>
           <Budgets />
         </div>
+      ) : currentView === "categories" ? (
+        <div style={{ marginLeft: isMobile ? 0 : 80 }}>
+          <Categories enableSplitwise={enableSplitwise} />
+        </div>
       ) : currentView === "reconciliation" ? (
-        <div style={{ marginLeft: sidebarCollapsed ? 80 : 240, transition: "margin-left 0.2s ease" }}>
+        <div style={{ marginLeft: isMobile ? 0 : 80 }}>
           <Reconciliation />
+        </div>
+      ) : currentView === "profile" ? (
+        <div style={{ marginLeft: isMobile ? 0 : 80 }}>
+          <Profile />
+        </div>
+      ) : currentView === "settings" ? (
+        <div style={{ marginLeft: isMobile ? 0 : 80 }}>
+          <Settings />
         </div>
       ) : (
         <Layout
           style={{
             minHeight: "100vh",
-            marginLeft: sidebarCollapsed ? 80 : 240,
-            background: isDark ? "#0f172a" : "#f8fafc",
-            transition: "margin-left 0.2s ease",
+            marginLeft: isMobile ? 0 : 80,
+            background: theme.bg.primary,
           }}
         >
           <Header
             style={{
               display: "flex",
-              alignItems: "center",
+              flexDirection: isMobile ? "column" : "row",
+              alignItems: isMobile ? "stretch" : "center",
               justifyContent: "space-between",
-              background: isDark ? "#1e293b" : "#ffffff",
+              background: theme.bg.primary,
               height: "auto",
-              padding: "24px 48px",
-              borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+              padding: isMobile ? "16px" : "12px 48px 0 48px",
+              border: "none",
+              gap: isMobile ? "16px" : "16px",
             }}
           >
+            {isMobile && (
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <Button
+                  type="text"
+                  icon={<MenuOutlined />}
+                  onClick={() => setMobileDrawerOpen(true)}
+                  style={{
+                    fontSize: 20,
+                    width: 40,
+                    height: 40,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: theme.text.primary,
+                    flexShrink: 0,
+                  }}
+                />
+              </div>
+            )}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: "10px",
-                background: isDark ? "#0f172a" : "#ffffff",
+                background: theme.bg.secondary,
                 padding: "14px 16px",
                 borderRadius: "12px",
                 boxShadow: isDark
                   ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
                   : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
-                border: `1px solid ${isDark ? "#334155" : "#e5e7eb"}`,
-                width: "380px",
+                border: `1px solid ${theme.border.primary}`,
+                width: isMobile ? "100%" : "380px",
               }}
             >
               <Segmented
@@ -308,7 +478,7 @@ const Dashboard = () => {
                 onChange={handleDateModeChange}
                 block
                 style={{
-                  background: isDark ? "#1e293b" : "#f3f4f6",
+                  background: theme.bg.tertiary,
                   padding: "4px",
                   fontWeight: 500,
                 }}
@@ -332,8 +502,8 @@ const Dashboard = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "0 8px",
-                      background: isDark ? "#1e293b" : "#f9fafb",
-                      border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+                      background: theme.bg.tertiary,
+                      border: `1px solid ${theme.border.secondary}`,
                       borderRadius: "8px",
                       minWidth: "36px",
                     }}
@@ -344,9 +514,9 @@ const Dashboard = () => {
                       alignItems: "center",
                       gap: "0px",
                       flex: 1,
-                      background: isDark ? "#1e293b" : "#f9fafb",
+                      background: theme.bg.tertiary,
                       borderRadius: "8px",
-                      border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+                      border: `1px solid ${theme.border.secondary}`,
                       overflow: "hidden",
                     }}
                   >
@@ -369,7 +539,7 @@ const Dashboard = () => {
                       style={{
                         width: "1px",
                         height: "24px",
-                        background: isDark ? "#475569" : "#e5e7eb",
+                        background: theme.border.secondary,
                       }}
                     ></div>
                     <Select
@@ -399,8 +569,8 @@ const Dashboard = () => {
                       alignItems: "center",
                       justifyContent: "center",
                       padding: "0 8px",
-                      background: isDark ? "#1e293b" : "#f9fafb",
-                      border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+                      background: theme.bg.tertiary,
+                      border: `1px solid ${theme.border.secondary}`,
                       borderRadius: "8px",
                       minWidth: "36px",
                     }}
@@ -413,41 +583,43 @@ const Dashboard = () => {
                   size="large"
                   style={{
                     borderRadius: "8px",
-                    border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
-                    background: isDark ? "#1e293b" : "#f9fafb",
+                    border: `1px solid ${theme.border.secondary}`,
+                    background: theme.bg.tertiary,
                   }}
                   format="MMM DD, YYYY"
                 />
               )}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-              {totals && <ExpenseTotal total={totals} />}
-            </div>
+            {isMobile && totals && (
+              <div style={{ width: "100%" }}>
+                <ExpenseTotal total={totals} visibleTotals={visibleTotals} />
+              </div>
+            )}
+            {!isMobile && (
+              <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+                {totals && <ExpenseTotal total={totals} visibleTotals={visibleTotals} />}
+              </div>
+            )}
           </Header>
           <Content
             style={{
-              padding: "24px 48px",
+              padding: isMobile ? "16px" : "12px 48px 24px 48px",
               minHeight: "calc(100vh - 128px)",
             }}
           >
             {/* Charts Section */}
-            <Row gutter={24}>
-              <Col span={24}>
-                <SpendingTrendsChart />
+            <Row gutter={[16, 12]} style={{ marginBottom: 12 }}>
+              <Col xs={24} sm={24} md={12}>
+                <SpendingTrendsChart refreshTrigger={chartRefreshTrigger} />
               </Col>
-            </Row>
-            <Row gutter={24}>
-              <Col xs={24} lg={12}>
+              <Col xs={24} sm={24} md={12}>
                 <CategoryBreakdownChart expenseData={expenseData} />
-              </Col>
-              <Col xs={24} lg={12}>
-                <TopCategoriesWidget expenseData={expenseData} />
               </Col>
             </Row>
 
             {/* Expense List */}
             {expenseData && (
-              <ExpenseList expenseData={expenseData} view={currentView} />
+              <ExpenseList expenseData={expenseData} view={currentView} visibleColumns={visibleColumns} />
             )}
           </Content>
         </Layout>
@@ -465,40 +637,13 @@ const Dashboard = () => {
         onSuccess={handleImportSuccess}
       />
 
-      <FloatButton.Group
-        trigger="click"
-        type="primary"
-        style={{
-          right: 24,
-        }}
-        icon={<PlusOutlined />}
-      >
-        <FloatButton
-          onClick={openCsvImportWizard}
-          tooltip={<div>Import CSV</div>}
-          icon={<FileExcelOutlined />}
-        />
-        <FloatButton
-          onClick={handleSplitwiseSync}
-          loading={syncing}
-          tooltip={
-            <div>
-              Sync Splitwise
-              {syncStatus && !syncStatus.hasNeverSynced && (
-                <div style={{ fontSize: "11px", opacity: 0.7 }}>
-                  Last: {moment(syncStatus.lastSyncedAt).fromNow()}
-                </div>
-              )}
-            </div>
-          }
-          icon={<SplitwiseIcon className="splitwise-icon-theme" />}
-        />
-        <FloatButton
-          onClick={openAddExpense}
-          tooltip={<div>Add Expense</div>}
-          icon={<EditOutlined />}
-        />
-      </FloatButton.Group>
+      <SplitwiseSyncModal
+        visible={isSyncModalOpen}
+        onConfirm={performSplitwiseSync}
+        onCancel={() => setIsSyncModalOpen(false)}
+        isFirstSync={syncStatus?.hasNeverSynced || !syncStatus?.lastSyncedAt}
+        lastSyncedAt={syncStatus?.lastSyncedAt}
+      />
     </>
   );
 };

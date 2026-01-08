@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Layout, Button, Card } from "antd";
 import { PlusOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
@@ -8,22 +8,18 @@ import BudgetForm from "../components/BudgetForm";
 import BudgetCharts from "../components/BudgetCharts";
 import CategoryBudgets from "../components/CategoryBudgets";
 import { getBudgetTracking } from "../services/budgetService";
+import { colors } from "../styles/theme";
 
 const { Header, Content } = Layout;
 
 const Budgets = () => {
   const { isDark } = useTheme();
+  const theme = isDark ? colors.dark : colors.light;
   const [selectedDate, setSelectedDate] = useState(moment());
   const [budgetData, setBudgetData] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchBudgetData();
-  }, [selectedDate]);
-
-  const fetchBudgetData = async () => {
-    setLoading(true);
+  const fetchBudgetData = useCallback(async () => {
     try {
       const data = await getBudgetTracking(
         selectedDate.month(),
@@ -32,10 +28,12 @@ const Budgets = () => {
       setBudgetData(data);
     } catch (error) {
       console.error("Failed to load budget data:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchBudgetData();
+  }, [fetchBudgetData]);
 
   const handlePreviousMonth = () => {
     setSelectedDate(selectedDate.clone().subtract(1, "month"));
@@ -54,7 +52,7 @@ const Budgets = () => {
     <Layout
       style={{
         minHeight: "100vh",
-        background: isDark ? "#0f172a" : "#f8fafc",
+        background: theme.bg.primary,
       }}
     >
       <Header
@@ -62,9 +60,9 @@ const Budgets = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: isDark ? "#1e293b" : "#ffffff",
-          padding: "24px 48px",
-          borderBottom: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+          background: theme.bg.primary,
+          padding: "12px 48px 0 48px",
+          border: "none",
         }}
       >
         {/* Month selector */}
@@ -74,14 +72,14 @@ const Budgets = () => {
             onClick={handlePreviousMonth}
             type="text"
             style={{
-              color: isDark ? "#e2e8f0" : "#1e293b",
+              color: theme.text.primary,
             }}
           />
           <span
             style={{
               fontSize: "18px",
               fontWeight: 600,
-              color: isDark ? "#e2e8f0" : "#1e293b",
+              color: theme.text.primary,
             }}
           >
             {selectedDate.format("MMMM YYYY")}
@@ -91,7 +89,7 @@ const Budgets = () => {
             onClick={handleNextMonth}
             type="text"
             style={{
-              color: isDark ? "#e2e8f0" : "#1e293b",
+              color: theme.text.primary,
             }}
           />
         </div>
@@ -105,7 +103,7 @@ const Budgets = () => {
         </Button>
       </Header>
 
-      <Content style={{ padding: "24px 48px" }}>
+      <Content style={{ padding: "12px 48px 24px 48px" }}>
         {budgetData?.hasBudget ? (
           <>
             {/* Overall budget overview */}
@@ -122,12 +120,12 @@ const Budgets = () => {
             style={{
               textAlign: "center",
               padding: "48px",
-              background: isDark ? "#0f172a" : "#ffffff",
-              border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+              background: theme.bg.secondary,
+              border: `1px solid ${theme.border.primary}`,
               borderRadius: "12px",
             }}
           >
-            <h3 style={{ color: isDark ? "#e2e8f0" : "#1e293b" }}>
+            <h3 style={{ color: theme.text.primary }}>
               No budget set for {selectedDate.format("MMMM YYYY")}
             </h3>
             <Button

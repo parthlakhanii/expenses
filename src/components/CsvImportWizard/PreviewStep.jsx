@@ -5,12 +5,13 @@ import {
   ArrowDownOutlined,
   WarningOutlined
 } from '@ant-design/icons';
-import axios from 'axios';
+import axios from '../../utils/axiosConfig';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useStorage } from '../../contexts/StorageContext';
+import { getAllExpenses } from '../../services/storageAdapter';
+import { findDuplicates, markDuplicates } from '../../utils/duplicateDetection';
 
 const { Text } = Typography;
-
-const API_URL = process.env.REACT_APP_API_URL;
 
 /**
  * Step 3: Preview Data
@@ -18,6 +19,7 @@ const API_URL = process.env.REACT_APP_API_URL;
  */
 const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
   const { isDark } = useTheme();
+  const { storageMode } = useStorage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [preview, setPreview] = useState([]);
@@ -30,6 +32,7 @@ const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
 
   useEffect(() => {
     fetchPreview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPreview = async () => {
@@ -37,7 +40,8 @@ const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
     setError(null);
 
     try {
-      const response = await axios.post(`${API_URL}/api/v1/csv/preview`, {
+      // Fetch transformed data from server (same transformation logic for both modes)
+      const response = await axios.post('/api/v1/csv/preview', {
         sessionId,
         columnMapping
       });
@@ -46,14 +50,38 @@ const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
         throw new Error(response.data.message || 'Failed to generate preview');
       }
 
+      let previewData = response.data.data.preview || [];
+      let stats = response.data.data.statistics || {};
+
+      // Local mode: Do duplicate detection client-side against IndexedDB
+      if (storageMode === 'local') {
+        // Fetch existing expenses from IndexedDB
+        const existingExpenses = await getAllExpenses();
+
+        // Find duplicates using client-side logic
+        const duplicates = await findDuplicates(previewData, existingExpenses);
+
+        // Mark duplicates in preview data
+        previewData = markDuplicates(previewData, duplicates);
+
+        // Update statistics
+        stats = {
+          ...stats,
+          potentialDuplicates: duplicates.length
+        };
+
+        console.log(`Client-side duplicate detection: Found ${duplicates.length} duplicates`);
+      }
+      // Cloud mode: Server already detected duplicates against MongoDB
+
       // Add explicit index to each item for proper pagination handling
-      const previewWithIndex = (response.data.data.preview || []).map((item, index) => ({
+      const previewWithIndex = previewData.map((item, index) => ({
         ...item,
         _originalIndex: index
       }));
 
       setPreview(previewWithIndex);
-      setStatistics(response.data.data.statistics || {});
+      setStatistics(stats);
       setLoading(false);
 
     } catch (err) {
@@ -189,8 +217,6 @@ const PreviewStep = ({ sessionId, columnMapping, onNext, onBack }) => {
   const duplicateCount = statistics.potentialDuplicates || 0;
   const totalRows = statistics.totalRows || 0;
   const newRows = totalRows - duplicateCount;
-  const incomeRows = statistics.incomeRows || 0;
-  const expenseRows = statistics.expenseRows || 0;
 
   return (
     <div style={{ padding: '24px' }}>

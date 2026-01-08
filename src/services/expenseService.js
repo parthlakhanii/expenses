@@ -1,10 +1,13 @@
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+import { API_URL, getAuthHeaders } from "../utils/apiClient";
+
 const USER_ID = parseInt(process.env.REACT_APP_USER_ID);
 
 const getAllExpenses = async () => {
   const url = `${API_URL}/api/v1/expense`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
     const json = await response.json();
     return json.data || [];
   } catch (error) {
@@ -16,7 +19,9 @@ const getAllExpenses = async () => {
 const getExpensesByMonth = async (from, to) => {
   const url = `${API_URL}/api/v1/expense?startDate=${from}&endDate=${to}`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
     const json = await response.json();
     return json.data || [];
   } catch (error) {
@@ -31,7 +36,12 @@ const calculateTotals = async (expenseData) => {
   let totalOthers = 0;
 
   if (!expenseData || !Array.isArray(expenseData)) {
-    return { totalExpense: 0, totalIncome: 0, totalInvestment: 0, totalOthers: 0 };
+    return {
+      totalExpense: 0,
+      totalIncome: 0,
+      totalInvestment: 0,
+      totalOthers: 0,
+    };
   }
 
   for (const expense of expenseData) {
@@ -45,14 +55,54 @@ const calculateTotals = async (expenseData) => {
       totalOthers += expense.amount;
     }
   }
-  console.log({ totalExpense, totalIncome, totalInvestment, totalOthers });
   return { totalExpense, totalIncome, totalInvestment, totalOthers };
+};
+
+const createExpense = async (expenseData) => {
+  const url = `${API_URL}/api/v1/expense`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(expenseData),
+    });
+    const json = await response.json();
+    if (json.error_status) {
+      throw new Error(json.error_message || "Failed to create expense");
+    }
+    return json;
+  } catch (error) {
+    console.error("Error creating expense:", error);
+    throw error;
+  }
+};
+
+const updateExpense = async (id, expenseData) => {
+  const url = `${API_URL}/api/v1/expense/${id}`;
+  try {
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(expenseData),
+    });
+    const json = await response.json();
+    if (json.error_status) {
+      throw new Error(json.error_message || "Failed to update expense");
+    }
+    return json;
+  } catch (error) {
+    console.error(`Error updating expense with id: ${id}`, error);
+    throw error;
+  }
 };
 
 const deleteExpenseById = async (id) => {
   const url = `${API_URL}/api/v1/expense/${id}`;
   try {
-    const response = await fetch(url, { method: "DELETE" });
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
     if (!response.ok) {
       throw new Error("Failed to delete the expense");
     }
@@ -66,7 +116,9 @@ const deleteExpenseById = async (id) => {
 const getSplitWiseExpenseByUserName = async (from, to, userName) => {
   const url = `${API_URL}/api/v1/splitwise?from=${from}&to=${to}&user=${userName}`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: getAuthHeaders(),
+    });
     const json = await response.json();
     const data = json.data || [];
     return normalizeSplitWiseData(data);
@@ -95,6 +147,8 @@ export {
   getAllExpenses,
   getExpensesByMonth,
   calculateTotals,
+  createExpense,
+  updateExpense,
   deleteExpenseById,
   getSplitWiseExpenseByUserName,
 };

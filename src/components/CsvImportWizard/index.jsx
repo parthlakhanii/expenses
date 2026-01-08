@@ -6,6 +6,7 @@ import {
   EyeOutlined,
   CheckCircleOutlined
 } from '@ant-design/icons';
+import { useResponsive } from '../../hooks/useResponsive';
 import UploadStep from './UploadStep';
 import MappingStep from './MappingStep';
 import PreviewStep from './PreviewStep';
@@ -18,6 +19,7 @@ const { Step } = Steps;
  * Multi-step wizard for importing any CSV format
  */
 const CsvImportWizard = ({ open, onClose, onSuccess }) => {
+  const { isMobile } = useResponsive();
   const [currentStep, setCurrentStep] = useState(0);
   const [wizardData, setWizardData] = useState({
     sessionId: null,
@@ -126,7 +128,7 @@ const CsvImportWizard = ({ open, onClose, onSuccess }) => {
       open={open}
       onCancel={handleClose}
       footer={null}
-      width={1000}
+      width={isMobile ? "95vw" : 1000}
       centered
       destroyOnClose
       maskClosable={true}

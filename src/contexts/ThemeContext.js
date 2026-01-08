@@ -12,18 +12,73 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
+  // Get system preference
+  const getSystemTheme = () => {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  };
+
+  // Initialize theme mode from localStorage or default to 'system'
+  const [themeMode, setThemeMode] = useState(() => {
+    const saved = localStorage.getItem('themeMode');
+    return saved || 'system';
+  });
+
+  // Calculate actual isDark based on theme mode
   const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = localStorage.getItem('themeMode');
+    if (saved === 'system' || !saved) {
+      return getSystemTheme() === 'dark';
+    }
     return saved === 'dark';
   });
 
+  // Listen for system theme changes
   useEffect(() => {
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    if (themeMode !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    const handleChange = (e) => {
+      setIsDark(e.matches);
+    };
+
+    // Update initial state
+    setIsDark(mediaQuery.matches);
+
+    // Add listener
+    mediaQuery.addEventListener('change', handleChange);
+
+    // Cleanup
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [themeMode]);
+
+  // Update isDark when themeMode changes
+  useEffect(() => {
+    if (themeMode === 'system') {
+      setIsDark(getSystemTheme() === 'dark');
+    } else {
+      setIsDark(themeMode === 'dark');
+    }
+  }, [themeMode]);
+
+  // Save theme mode and update body attribute
+  useEffect(() => {
+    localStorage.setItem('themeMode', themeMode);
     // Update document body for global styling
     document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  }, [isDark]);
+  }, [themeMode, isDark]);
 
-  const toggleTheme = () => setIsDark(!isDark);
+  // Legacy toggleTheme for backward compatibility
+  const toggleTheme = () => {
+    setThemeMode(prevMode => {
+      if (prevMode === 'light') return 'dark';
+      if (prevMode === 'dark') return 'light';
+      // If system, toggle to opposite of current system theme
+      return getSystemTheme() === 'dark' ? 'light' : 'dark';
+    });
+  };
 
   const themeConfig = {
     algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
@@ -57,7 +112,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDark, themeMode, setThemeMode, toggleTheme }}>
       <ConfigProvider theme={themeConfig}>
         {children}
       </ConfigProvider>

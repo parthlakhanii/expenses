@@ -18,6 +18,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
+import { colors } from "../styles/theme";
 import { updateReconciliationStatus } from "../services/reconciliationService";
 import moment from "moment";
 
@@ -29,14 +30,14 @@ const ReconciliationView = ({
   onUpdate,
 }) => {
   const { isDark } = useTheme();
-  const [selectedBankTx, setSelectedBankTx] = useState(null);
+  const theme = isDark ? colors.dark : colors.light;
   const [loading, setLoading] = useState(false);
 
   const cardStyle = {
-    background: isDark ? "#0f172a" : "#ffffff",
-    border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+    background: theme.bg.secondary,
+    border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
-    marginBottom: "24px",
+    marginBottom: "0px",
   };
 
   // Find potential matches for a bank transaction
@@ -90,22 +91,6 @@ const ReconciliationView = ({
       }
     } catch (error) {
       console.error("Failed to mark as matched:", error);
-      message.error("Failed to update transaction");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUndo = async (transactionId) => {
-    setLoading(true);
-    try {
-      await updateReconciliationStatus(transactionId, null);
-      message.success("Match status cleared");
-      if (onUpdate) {
-        onUpdate();
-      }
-    } catch (error) {
-      console.error("Failed to clear status:", error);
       message.error("Failed to update transaction");
     } finally {
       setLoading(false);
@@ -259,7 +244,7 @@ const ReconciliationView = ({
 
     if (matches.length === 0) {
       return (
-        <div style={{ padding: "12px", color: isDark ? "#94a3b8" : "#64748b" }}>
+        <div style={{ padding: "12px", color: theme.text.secondary }}>
           No potential Splitwise matches found for this transaction
         </div>
       );
@@ -275,8 +260,8 @@ const ReconciliationView = ({
           </Space>
         }
         style={{
-          background: isDark ? "#1e293b" : "#f9fafb",
-          border: `1px solid ${isDark ? "#475569" : "#e5e7eb"}`,
+          background: theme.bg.tertiary,
+          border: `1px solid ${theme.border.secondary}`,
         }}
       >
         {matches.map((match, index) => {
@@ -287,8 +272,8 @@ const ReconciliationView = ({
               style={{
                 padding: "12px",
                 marginBottom: index < matches.length - 1 ? "8px" : "0",
-                background: isDark ? "#0f172a" : "#ffffff",
-                border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
+                background: theme.bg.primary,
+                border: `1px solid ${theme.border.primary}`,
                 borderRadius: "8px",
               }}
             >
@@ -353,27 +338,17 @@ const ReconciliationView = ({
 
   return (
     <div>
-      <Row gutter={24}>
+      <Row gutter={24} style={{ marginBottom: 12 }}>
         <Col span={24}>
           <Card
             title={
               <Space>
-                <Text
-                  strong
-                  style={{
-                    fontSize: "16px",
-                    color: isDark ? "#e2e8f0" : "#1e293b",
-                  }}
-                >
-                  Bank Transactions
-                </Text>
+                <Text strong>Bank Transactions</Text>
                 <Badge
                   count={bankTransactions.length}
                   style={{ backgroundColor: "#f87171" }}
                 />
-                <Text type="secondary" style={{ fontSize: "13px" }}>
-                  (Not yet matched with Splitwise)
-                </Text>
+                <Text type="secondary">(Not yet matched with Splitwise)</Text>
               </Space>
             }
             bordered={false}
@@ -399,22 +374,12 @@ const ReconciliationView = ({
           <Card
             title={
               <Space>
-                <Text
-                  strong
-                  style={{
-                    fontSize: "16px",
-                    color: isDark ? "#e2e8f0" : "#1e293b",
-                  }}
-                >
-                  Splitwise Expenses
-                </Text>
+                <Text strong>Splitwise Expenses</Text>
                 <Badge
                   count={splitwiseExpenses.length}
                   style={{ backgroundColor: "#60a5fa" }}
                 />
-                <Text type="secondary" style={{ fontSize: "13px" }}>
-                  (You paid for these)
-                </Text>
+                <Text type="secondary">(You paid for these)</Text>
               </Space>
             }
             bordered={false}
