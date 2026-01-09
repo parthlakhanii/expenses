@@ -32,7 +32,11 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
       const { from, to, unit, periods } = rangeInfo;
 
       const allTransactions = await getExpensesByMonth(from, to);
-      const trends = calculateExpenseIncomeTrends(allTransactions, unit, periods);
+      const trends = calculateExpenseIncomeTrends(
+        allTransactions,
+        unit,
+        periods
+      );
       setTrendData(trends);
     } catch (error) {
       console.error("Failed to fetch trend data:", error);
@@ -121,28 +125,29 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
       bordered={false}
       style={cardStyle}
       loading={loading}
-      extra={
-        <Space size="small">
-          <Checkbox
-            checked={showExpenses}
-            onChange={(e) => setShowExpenses(e.target.checked)}
-            style={{
-              color: isDark ? "#94a3b8" : "#64748b",
-            }}
-          >
-            <span style={{ color: "#f87171", fontWeight: 500 }}>Expenses</span>
-          </Checkbox>
-          <Checkbox
-            checked={showIncome}
-            onChange={(e) => setShowIncome(e.target.checked)}
-            style={{
-              color: isDark ? "#94a3b8" : "#64748b",
-            }}
-          >
-            <span style={{ color: "#34d399", fontWeight: 500 }}>Income</span>
-          </Checkbox>
-        </Space>
-      }
+      headStyle={{ borderBottom: "none" }}
+      // extra={
+      //   <Space size="small">
+      //     <Checkbox
+      //       checked={showExpenses}
+      //       onChange={(e) => setShowExpenses(e.target.checked)}
+      //       style={{
+      //         color: isDark ? "#94a3b8" : "#64748b",
+      //       }}
+      //     >
+      //       <span style={{ color: "#f87171", fontWeight: 500 }}>Expenses</span>
+      //     </Checkbox>
+      //     <Checkbox
+      //       checked={showIncome}
+      //       onChange={(e) => setShowIncome(e.target.checked)}
+      //       style={{
+      //         color: isDark ? "#94a3b8" : "#64748b",
+      //       }}
+      //     >
+      //       <span style={{ color: "#34d399", fontWeight: 500 }}>Income</span>
+      //     </Checkbox>
+      //   </Space>
+      // }
     >
       <ResponsiveContainer width="100%" height={280}>
         <LineChart
@@ -189,35 +194,42 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
       </ResponsiveContainer>
 
       {/* Time range selector at bottom */}
-      <div style={{
-        marginTop: 20,
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '8px',
-        paddingBottom: 12
-      }}>
+      <div
+        style={{
+          marginTop: 20,
+          display: "flex",
+          justifyContent: "center",
+          gap: "8px",
+          paddingBottom: 12,
+        }}
+      >
         {timeRangeOptions.map((option) => (
           <button
             key={option.value}
             onClick={() => setTimeRange(option.value)}
             style={{
-              padding: '6px 16px',
-              border: 'none',
-              borderRadius: '8px',
-              background: timeRange === option.value
-                ? (isDark ? '#404040' : '#64748b')
-                : theme.bg.tertiary,
-              color: timeRange === option.value
-                ? '#ffffff'
-                : theme.text.secondary,
+              padding: "6px 16px",
+              border: "none",
+              borderRadius: "8px",
+              background:
+                timeRange === option.value
+                  ? isDark
+                    ? "#404040"
+                    : "#64748b"
+                  : theme.bg.tertiary,
+              color:
+                timeRange === option.value ? "#ffffff" : theme.text.secondary,
               fontWeight: timeRange === option.value ? 600 : 500,
-              fontSize: '13px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              minWidth: '52px',
-              boxShadow: timeRange === option.value
-                ? (isDark ? '0 2px 6px rgba(0, 0, 0, 0.6)' : '0 2px 6px rgba(100, 116, 139, 0.3)')
-                : 'none',
+              fontSize: "13px",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              minWidth: "52px",
+              boxShadow:
+                timeRange === option.value
+                  ? isDark
+                    ? "0 2px 6px rgba(0, 0, 0, 0.6)"
+                    : "0 2px 6px rgba(100, 116, 139, 0.3)"
+                  : "none",
             }}
             onMouseEnter={(e) => {
               if (timeRange !== option.value) {

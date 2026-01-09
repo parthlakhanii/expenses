@@ -85,3 +85,26 @@ body[data-theme="light"] .splitwise-icon-theme g path {
   fill: none !important;
   stroke: #1e293b !important;
 }
+
+/* Dark mode toast/message styling */
+body[data-theme="dark"] .ant-message .ant-message-notice-content {
+  background: #0a0a0a !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.6) !important;
+}
+
+body[data-theme="dark"] .ant-message .ant-message-success .anticon {
+  color: #34d399 !important;
+}
+
+body[data-theme="dark"] .ant-message .ant-message-error .anticon {
+  color: #f87171 !important;
+}
+
+body[data-theme="dark"] .ant-message .ant-message-warning .anticon {
+  color: #fbbf24 !important;
+}
+
+body[data-theme="dark"] .ant-message .ant-message-info .anticon {
+  color: #60a5fa !important;
+}
