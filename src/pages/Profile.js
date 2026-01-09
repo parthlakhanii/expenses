@@ -25,18 +25,18 @@ const Profile = () => {
     background: theme.bg.secondary,
     border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
-    marginBottom: "24px",
+    marginBottom: "12px",
   };
 
   const headerStyle = {
-    background: theme.bg.secondary,
-    borderBottom: `1px solid ${theme.border.primary}`,
-    padding: "28px 48px",
+    background: "transparent",
+    border: "none",
+    padding: "24px 48px 0 48px",
     height: "auto",
   };
 
   const contentStyle = {
-    padding: "24px 48px",
+    padding: "12px 48px 24px 48px",
     background: theme.bg.primary,
     minHeight: "100vh",
   };

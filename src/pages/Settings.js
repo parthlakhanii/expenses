@@ -6,7 +6,6 @@ import {
   message,
   Spin,
   Typography,
-  Divider,
   Switch,
   Space,
   Checkbox,
@@ -19,8 +18,6 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   CloudUploadOutlined,
-  CloudOutlined,
-  LaptopOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
@@ -403,17 +400,17 @@ const Settings = () => {
     background: theme.bg.secondary,
     border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
-    marginBottom: "24px",
+    marginBottom: "12px",
   };
 
   const headerStyle = {
-    background: theme.bg.secondary,
-    borderBottom: `1px solid ${theme.border.primary}`,
-    padding: "24px 48px",
+    background: "transparent",
+    border: "none",
+    padding: "24px 48px 0 48px",
   };
 
   const contentStyle = {
-    padding: "24px 48px",
+    padding: "12px 48px 24px 48px",
     background: theme.bg.primary,
     minHeight: "100vh",
   };
@@ -422,7 +419,7 @@ const Settings = () => {
     <Layout style={{ minHeight: "100vh", background: theme.bg.primary }}>
       <Header style={headerStyle}>
         <Title level={2} style={{ margin: 0, color: theme.text.primary }}>
-          Settings
+          Preferences
         </Title>
       </Header>
 
@@ -430,183 +427,89 @@ const Settings = () => {
         {/* Splitwise Integration */}
         <Card title="Splitwise Integration" bordered={false} style={cardStyle}>
           <Spin spinning={loading}>
-            <div style={{ marginBottom: "16px" }}>
-              <Text strong>Status: </Text>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <Space>
+                {splitwiseConnected ? (
+                  <>
+                    <CheckCircleOutlined style={{ color: "#52c41a", fontSize: "18px" }} />
+                    <Text style={{ color: "#52c41a" }}>Connected</Text>
+                  </>
+                ) : (
+                  <>
+                    <CloseCircleOutlined style={{ color: theme.text.secondary, fontSize: "18px" }} />
+                    <Text type="secondary">Not Connected</Text>
+                  </>
+                )}
+              </Space>
               {splitwiseConnected ? (
-                <>
-                  <CheckCircleOutlined
-                    style={{ color: "#52c41a", marginRight: "8px" }}
-                  />
-                  <Text style={{ color: "#52c41a" }}>Connected</Text>
-                </>
+                <Button
+                  danger
+                  icon={<DisconnectOutlined />}
+                  onClick={handleDisconnectSplitwise}
+                  loading={disconnecting}
+                >
+                  Disconnect
+                </Button>
               ) : (
-                <>
-                  <CloseCircleOutlined
-                    style={{ color: "#8b5cf6", marginRight: "8px" }}
-                  />
-                  <Text>Not Connected</Text>
-                </>
+                <Button
+                  type="primary"
+                  icon={<LinkOutlined />}
+                  onClick={handleConnectSplitwise}
+                >
+                  Connect
+                </Button>
               )}
             </div>
-
-            <Text
-              type="secondary"
-              style={{ display: "block", marginBottom: "24px" }}
-            >
-              {splitwiseConnected
-                ? "Your Splitwise account is connected. You can sync your shared expenses from Splitwise."
-                : "Connect your Splitwise account to import and sync shared expenses automatically."}
-            </Text>
-
-            {splitwiseConnected ? (
-              <Button
-                type="default"
-                danger
-                icon={<DisconnectOutlined />}
-                onClick={handleDisconnectSplitwise}
-                loading={disconnecting}
-              >
-                Disconnect Splitwise
-              </Button>
-            ) : (
-              <Button
-                type="primary"
-                icon={<LinkOutlined />}
-                onClick={handleConnectSplitwise}
-              >
-                Connect Splitwise
-              </Button>
-            )}
           </Spin>
         </Card>
 
-        <Divider />
-
         {/* Storage Mode */}
-        <Card title="Storage & Privacy" bordered={false} style={cardStyle}>
-          <Space direction="vertical" size="large" style={{ width: "100%" }}>
-            <div>
-              <Text strong style={{ display: "block", marginBottom: "12px" }}>
-                Storage Mode
-              </Text>
-              <div
-                style={{
-                  padding: "12px 16px",
-                  background: theme.bg.tertiary,
-                  borderRadius: "8px",
-                  border: `1px solid ${theme.border.secondary}`,
-                  marginBottom: "8px",
-                }}
-              >
+        {storageMode === "local" && (
+          <Card title="Cloud Backup" bordered={false} style={cardStyle}>
+            <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                 <Space>
-                  {storageMode === "cloud" ? (
-                    <CloudOutlined />
-                  ) : (
-                    <LaptopOutlined />
-                  )}
-                  <div>
-                    <Text style={{ fontWeight: 500 }}>
-                      {storageMode === "cloud"
-                        ? "Cloud Storage"
-                        : "Local Storage"}
-                    </Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      {storageMode === "cloud"
-                        ? "Data stored on server, accessible from any device"
-                        : "Data stored in your browser only"}
-                    </Text>
-                  </div>
+                  <Text>Encrypted Backup</Text>
+                  <Tooltip title="Zero-knowledge encryption. You enter your password each time you sync.">
+                    <InfoCircleOutlined style={{ color: theme.text.secondary }} />
+                  </Tooltip>
                 </Space>
+                <Switch
+                  checked={syncEnabled}
+                  onChange={handleSyncEnabledChange}
+                  loading={updatingStorage}
+                />
               </div>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                Storage mode is set during signup and cannot be changed
-              </Text>
-            </div>
 
-            {storageMode === "local" && (
-              <>
-                <Divider style={{ margin: "8px 0" }} />
-                <div>
-                  <Space
-                    style={{ width: "100%", justifyContent: "space-between" }}
+              {syncEnabled && (
+                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                  <Text type="secondary" style={{ fontSize: "13px" }}>
+                    {lastSyncTime && lastSyncTime > 0
+                      ? `Last synced ${moment(lastSyncTime).fromNow()}`
+                      : "Never synced"}
+                    {syncNeedsUpdate && (
+                      <span style={{ color: "#f59e0b", marginLeft: "8px" }}>
+                        • Pending
+                      </span>
+                    )}
+                  </Text>
+                  <Button
+                    type="primary"
+                    icon={<CloudUploadOutlined />}
+                    onClick={handleManualSync}
+                    loading={syncing}
+                    size="small"
                   >
-                    <div>
-                      <Space style={{ marginBottom: "4px" }}>
-                        <Text strong>Encrypted Cloud Backup</Text>
-                        <Tooltip title="You'll enter your password each time you sync. Your password is never stored.">
-                          <InfoCircleOutlined
-                            style={{
-                              color: theme.text.secondary,
-                              fontSize: "14px",
-                            }}
-                          />
-                        </Tooltip>
-                      </Space>
-                      <Text
-                        type="secondary"
-                        style={{ fontSize: "13px", display: "block" }}
-                      >
-                        Zero-knowledge encrypted backup
-                      </Text>
-                    </div>
-                    <Switch
-                      checked={syncEnabled}
-                      onChange={handleSyncEnabledChange}
-                      loading={updatingStorage}
-                    />
-                  </Space>
+                    Sync Now
+                  </Button>
                 </div>
-
-                {syncEnabled && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 16px",
-                      background: theme.bg.tertiary,
-                      borderRadius: "8px",
-                      border: `1px solid ${theme.border.secondary}`,
-                      marginTop: "12px",
-                    }}
-                  >
-                    <div>
-                      <Text
-                        style={{ fontSize: "13px", color: theme.text.primary }}
-                      >
-                        {lastSyncTime && lastSyncTime > 0
-                          ? `Last synced ${moment(lastSyncTime).fromNow()}`
-                          : "Never synced"}
-                        {syncNeedsUpdate && (
-                          <span style={{ color: "#f59e0b", marginLeft: "8px" }}>
-                            • Pending
-                          </span>
-                        )}
-                      </Text>
-                    </div>
-                    <Button
-                      type="primary"
-                      icon={<CloudUploadOutlined />}
-                      onClick={handleManualSync}
-                      loading={syncing}
-                      size="small"
-                    >
-                      Sync Now
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-          </Space>
-        </Card>
-
-        <Divider />
+              )}
+            </Space>
+          </Card>
+        )}
 
         {/* Preferences */}
-        <Card title="Preferences" bordered={false} style={cardStyle}>
+        <Card title="Appearance" bordered={false} style={cardStyle}>
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
               <Text strong style={{ display: "block", marginBottom: "12px" }}>
@@ -615,194 +518,67 @@ const Settings = () => {
               <Radio.Group
                 value={themeMode}
                 onChange={(e) => setThemeMode(e.target.value)}
-                style={{ width: "100%" }}
               >
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  <Radio value="system">
-                    <div>
-                      <Text>System</Text>
-                      <Text
-                        type="secondary"
-                        style={{ fontSize: "12px", display: "block", marginLeft: "24px" }}
-                      >
-                        Follow system theme preference
-                      </Text>
-                    </div>
-                  </Radio>
-                  <Radio value="light">
-                    <div>
-                      <Text>Light</Text>
-                      <Text
-                        type="secondary"
-                        style={{ fontSize: "12px", display: "block", marginLeft: "24px" }}
-                      >
-                        Always use light mode
-                      </Text>
-                    </div>
-                  </Radio>
-                  <Radio value="dark">
-                    <div>
-                      <Text>Dark</Text>
-                      <Text
-                        type="secondary"
-                        style={{ fontSize: "12px", display: "block", marginLeft: "24px" }}
-                      >
-                        Always use dark mode
-                      </Text>
-                    </div>
-                  </Radio>
+                <Space>
+                  <Radio value="system">System</Radio>
+                  <Radio value="light">Light</Radio>
+                  <Radio value="dark">Dark</Radio>
                 </Space>
               </Radio.Group>
             </div>
+          </Space>
+        </Card>
 
-            <Divider style={{ margin: "8px 0" }} />
-
-            <div>
-              <Space style={{ width: "100%", justifyContent: "space-between" }}>
-                <div>
-                  <Text
-                    strong
-                    style={{ display: "block", marginBottom: "4px" }}
-                  >
-                    Enable Splitwise Integration
-                  </Text>
-                  <Text type="secondary" style={{ fontSize: "13px" }}>
-                    Show Splitwise sync options and features in the dashboard
-                  </Text>
-                </div>
-                <Switch
-                  checked={enableSplitwise}
-                  onChange={handleToggleSplitwise}
-                  loading={updatingSettings}
-                />
-              </Space>
-            </div>
-
-            <Divider style={{ margin: "8px 0" }} />
-
+        {/* Dashboard Settings */}
+        <Card title="Dashboard" bordered={false} style={cardStyle}>
+          <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
               <Text strong style={{ display: "block", marginBottom: "12px" }}>
-                Dashboard Columns
+                Visible Columns
               </Text>
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: "13px",
-                  display: "block",
-                  marginBottom: "16px",
-                }}
-              >
-                Choose which columns to display in the expense table
-              </Text>
-              <Space direction="vertical" size="middle">
+              <Space direction="vertical" size="small">
                 <Checkbox
                   checked={visibleColumns.expenseType}
                   onChange={() => handleToggleColumn("expenseType")}
                 >
-                  <div>
-                    <Text>Expense Type</Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      Show income, expense, investment, transfer
-                    </Text>
-                  </div>
+                  Expense Type
                 </Checkbox>
                 <Checkbox
                   checked={visibleColumns.dataSource}
                   onChange={() => handleToggleColumn("dataSource")}
                 >
-                  <div>
-                    <Text>Data Source</Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      Show where the expense came from (Splitwise, Wealthsimple,
-                      etc.)
-                    </Text>
-                  </div>
+                  Data Source
                 </Checkbox>
               </Space>
             </div>
 
-            <Divider style={{ margin: "8px 0" }} />
-
             <div>
               <Text strong style={{ display: "block", marginBottom: "12px" }}>
-                Dashboard Totals
+                Show Additional Totals
               </Text>
-              <Text
-                type="secondary"
-                style={{
-                  fontSize: "13px",
-                  display: "block",
-                  marginBottom: "16px",
-                }}
-              >
-                Choose which totals to display in the dashboard header
-              </Text>
-              <Space direction="vertical" size="middle">
-                <Checkbox
-                  checked={visibleTotals.expense}
-                  onChange={() => handleToggleTotal("expense")}
-                  disabled
-                >
-                  <div>
-                    <Text>Expense</Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      Always visible
-                    </Text>
-                  </div>
-                </Checkbox>
-                <Checkbox
-                  checked={visibleTotals.income}
-                  onChange={() => handleToggleTotal("income")}
-                  disabled
-                >
-                  <div>
-                    <Text>Income</Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      Always visible
-                    </Text>
-                  </div>
-                </Checkbox>
+              <Space direction="vertical" size="small">
                 <Checkbox
                   checked={visibleTotals.investment}
                   onChange={() => handleToggleTotal("investment")}
                 >
-                  <div>
-                    <Text>Investment</Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      Show investment total
-                    </Text>
-                  </div>
+                  Investment
                 </Checkbox>
                 <Checkbox
                   checked={visibleTotals.transfer}
                   onChange={() => handleToggleTotal("transfer")}
                 >
-                  <div>
-                    <Text>Transfer</Text>
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: "12px", display: "block" }}
-                    >
-                      Show transfer total
-                    </Text>
-                  </div>
+                  Transfer
                 </Checkbox>
               </Space>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <Text>Enable Splitwise Features</Text>
+              <Switch
+                checked={enableSplitwise}
+                onChange={handleToggleSplitwise}
+                loading={updatingSettings}
+              />
             </div>
           </Space>
         </Card>

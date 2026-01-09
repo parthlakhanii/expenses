@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Layout,
   Select,
@@ -54,7 +54,7 @@ const Dashboard = () => {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
-  const [lastSyncStatus, setLastSyncStatus] = useState(null);
+  const lastSyncStatusRef = useRef(null);
   const [expenseData, setExpenseData] = useState([]);
   const [totals, setTotals] = useState(null);
   const [currentView, setCurrentView] = useState("dashboard");
@@ -94,10 +94,10 @@ const Dashboard = () => {
       setSyncStatus(status);
 
       // If sync just completed, auto-refresh data and show message (only for background/first sync)
-      if (lastSyncStatus?.status === "in_progress" && status.status === "success") {
+      if (lastSyncStatusRef.current?.status === "in_progress" && status.status === "success") {
         // Only show toast if it was a background sync (first sync)
         // For subsequent syncs, the message is shown immediately in handleSplitwiseSync
-        const wasFirstSync = lastSyncStatus?.hasNeverSynced || !lastSyncStatus?.lastSyncedAt;
+        const wasFirstSync = lastSyncStatusRef.current?.hasNeverSynced || !lastSyncStatusRef.current?.lastSyncedAt;
         if (wasFirstSync) {
           message.success(
             `First sync complete! ${status.recordsProcessed} records synced successfully.`
@@ -109,12 +109,12 @@ const Dashboard = () => {
         }
       }
 
-      setLastSyncStatus(status);
+      lastSyncStatusRef.current = status;
       return status;
     } catch (error) {
       console.error("Failed to get sync status:", error);
     }
-  }, [lastSyncStatus, currentView, selectedDate, updateExpenseData]);
+  }, [currentView, selectedDate, updateExpenseData]);
 
   useEffect(() => {
     const fetchExpenses = async () => {

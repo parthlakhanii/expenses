@@ -67,7 +67,7 @@ const SideNav = ({
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: 'Settings',
+      label: 'Preferences',
     },
   ];
 

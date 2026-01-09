@@ -14,7 +14,7 @@ export const useSettings = () => {
 };
 
 export const SettingsProvider = ({ children }) => {
-  const [enableSplitwise, setEnableSplitwise] = useState(false);
+  const [enableSplitwise, setEnableSplitwise] = useState(true);
   const [loading, setLoading] = useState(true);
 
   // Column visibility settings (localStorage only, not backend)
@@ -42,7 +42,7 @@ export const SettingsProvider = ({ children }) => {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/v1/user/settings`);
       if (!response.data.error_status) {
-        setEnableSplitwise(response.data.data.settings.enableSplitwise || false);
+        setEnableSplitwise(response.data.data.settings.enableSplitwise ?? true);
       }
     } catch (error) {
       console.error('Error fetching user settings:', error);
