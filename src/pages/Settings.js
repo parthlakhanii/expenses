@@ -91,10 +91,10 @@ const Settings = () => {
 
     if (splitwiseResult === "success") {
       message.success("Splitwise account connected successfully!");
-      // Clean up URL
-      navigate("/settings", { replace: true });
       // Refresh status
       fetchSplitwiseStatus();
+      // Clean up URL
+      navigate("/settings", { replace: true });
     } else if (splitwiseResult === "error") {
       const errorMessage =
         params.get("message") || "Failed to connect Splitwise account";
@@ -138,13 +138,24 @@ const Settings = () => {
     }
   };
 
-  const handleConnectSplitwise = () => {
-    // Get token from localStorage
-    const token = localStorage.getItem("token");
+  const handleConnectSplitwise = async () => {
+    try {
+      // Make authenticated request to get OAuth URL
+      // Token is sent in Authorization header via axios interceptor
+      const response = await axios.post(`${API_URL}/api/v1/auth/splitwise/initiate`);
 
-    // Redirect to backend OAuth initiation endpoint with token
-    // The backend will redirect to Splitwise, then back to /dashboard?splitwise=success
-    window.location.href = `${API_URL}/api/v1/auth/splitwise?token=${token}`;
+      if (!response.data.error_status && response.data.data?.oauthUrl) {
+        // Redirect to OAuth URL returned by backend
+        window.location.href = response.data.data.oauthUrl;
+      } else {
+        message.error(
+          response.data.message || "Failed to initiate Splitwise connection"
+        );
+      }
+    } catch (error) {
+      console.error("Error initiating Splitwise connection:", error);
+      message.error("Failed to connect to Splitwise");
+    }
   };
 
   const handleDisconnectSplitwise = async () => {

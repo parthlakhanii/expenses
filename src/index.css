@@ -88,7 +88,7 @@ body[data-theme="light"] .splitwise-icon-theme g path {
 
 /* Dark mode toast/message styling */
 body[data-theme="dark"] .ant-message .ant-message-notice-content {
-  background: #0a0a0a !important;
+  background: #2B2B2B !important;
   color: #f1f5f9 !important;
   box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.6) !important;
 }

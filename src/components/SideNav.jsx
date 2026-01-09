@@ -138,7 +138,8 @@ const SideNav = ({
           type="primary"
           style={{
             position: 'absolute',
-            right: 16,
+            left: 'calc(50% + 1px)',
+            transform: 'translateX(-50%)',
             bottom: 80,
           }}
           icon={<PlusOutlined />}
@@ -184,7 +185,8 @@ const SideNav = ({
             type="primary"
             style={{
               position: 'absolute',
-              right: 16,
+              left: 'calc(50% + 1px)',
+              transform: 'translateX(-50%)',
               bottom: 16,
             }}
           />
