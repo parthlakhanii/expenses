@@ -19,7 +19,11 @@ import { useCategories } from "../contexts/CategoryContext";
 import { colors } from "../styles/theme";
 
 import "./../styles/ExpenseList.css";
-import { DeleteOutlined, ExclamationCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+  DeleteOutlined,
+  ExclamationCircleOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
@@ -170,20 +174,25 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
   };
 
   // Custom filter dropdown for Expense Type (without "Select All")
-  const ExpenseTypeFilter = ({ setSelectedKeys, selectedKeys, confirm, clearFilters }) => {
+  const ExpenseTypeFilter = ({
+    setSelectedKeys,
+    selectedKeys,
+    confirm,
+    clearFilters,
+  }) => {
     const options = ["Income", "Expense", "Investment", "Transfer"];
 
     return (
       <div style={{ padding: 8 }}>
-        <Space direction="vertical" style={{ width: '100%' }}>
-          {options.map(option => (
+        <Space direction="vertical" style={{ width: "100%" }}>
+          {options.map((option) => (
             <Checkbox
               key={option}
               checked={selectedKeys.includes(option)}
               onChange={(e) => {
                 const keys = e.target.checked
                   ? [...selectedKeys, option]
-                  : selectedKeys.filter(k => k !== option);
+                  : selectedKeys.filter((k) => k !== option);
                 setSelectedKeys(keys);
               }}
             >
@@ -191,7 +200,7 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
             </Checkbox>
           ))}
         </Space>
-        <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
           <Button
             type="primary"
             size="small"
@@ -453,11 +462,22 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
   return (
     <>
       <Input
-        prefix={<SearchOutlined style={{ color: theme.text.secondary }} />}
-        placeholder="Search expenses..."
+        placeholder="Search"
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
-        style={{ marginBottom: 12, maxWidth: 500 }}
+        className="search-input-minimal"
+        style={{
+          marginBottom: 12,
+          maxWidth: 300,
+          background: "transparent",
+          borderTop: "none",
+          borderLeft: "none",
+          borderRight: "none",
+          borderBottom: `1px solid ${theme.border.primary}`,
+          borderRadius: 0,
+          paddingLeft: 0,
+          paddingRight: 0,
+        }}
         allowClear
         size="large"
       />
@@ -479,6 +499,7 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
           dataSource={filteredData}
           columns={columns}
           showSorterTooltip={false}
+          bordered={false}
           onRow={(record) => ({
             onMouseEnter: () => setHoveredRowId(record._id),
             onMouseLeave: () => setHoveredRowId(null),

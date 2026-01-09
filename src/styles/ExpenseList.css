@@ -3,12 +3,12 @@
   }
 
   .editable-cell-value-wrap {
-    padding: 5px 12px;
+    padding: 5px 0px;
     cursor: pointer;
   }
 
   .editable-row:hover .editable-cell-value-wrap {
-    padding: 4px 11px;
+    padding: 4px 0px;
     /* border: 1px solid #d9d9d9;
     border-radius: 2px; */
   }
@@ -25,4 +25,35 @@
   /* Show sorting arrow only when column is actively sorted */
   .ant-table-column-sort .ant-table-column-sorter {
     display: inline-flex !important;
+  }
+
+  /* Remove borders between table rows */
+  .ant-table-tbody > tr > td {
+    border-bottom: none !important;
+  }
+
+  /* Remove border below table header */
+  .ant-table-thead > tr > th {
+    border-bottom: none !important;
+  }
+
+  /* Remove vertical borders between header columns */
+  .ant-table-thead > tr > th::before {
+    display: none !important;
+  }
+
+  /* Align header text with content text */
+  .ant-table-thead > tr > th {
+    padding-left: 24px !important;
+  }
+
+  .ant-table-tbody > tr > td {
+    padding-left: 24px !important;
+  }
+
+  /* Remove focus shadow from search input */
+  .search-input-minimal.ant-input-affix-wrapper:focus,
+  .search-input-minimal.ant-input-affix-wrapper-focused {
+    box-shadow: none !important;
+    outline: none !important;
   }
