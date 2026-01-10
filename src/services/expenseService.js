@@ -1,7 +1,5 @@
 import { API_URL, getAuthHeaders } from "../utils/apiClient";
 
-const USER_ID = parseInt(process.env.REACT_APP_USER_ID);
-
 const getAllExpenses = async () => {
   const url = `${API_URL}/api/v1/expense`;
   try {
@@ -113,8 +111,8 @@ const deleteExpenseById = async (id) => {
   }
 };
 
-const getSplitWiseExpenseByUserName = async (from, to, userName) => {
-  const url = `${API_URL}/api/v1/splitwise?from=${from}&to=${to}&user=${userName}`;
+const getSplitWiseExpenseByUserName = async (from, to) => {
+  const url = `${API_URL}/api/v1/splitwise?from=${from}&to=${to}`;
   try {
     const response = await fetch(url, {
       headers: getAuthHeaders(),
@@ -123,24 +121,28 @@ const getSplitWiseExpenseByUserName = async (from, to, userName) => {
     const data = json.data || [];
     return normalizeSplitWiseData(data);
   } catch (error) {
-    console.error(`Error fetching Splitwise expenses for user: ${userName}`);
+    console.error(`Error fetching Splitwise expenses`);
     throw error;
   }
 };
 
 const normalizeSplitWiseData = (data) => {
-  return data.map((expense) => ({
-    amount: parseInt(expense.cost),
-    date: new Date(expense.date).toISOString().split("T")[0],
-    type: "Expense",
-    description: expense.description,
-    category: expense.category.name,
-    source: "Splitwise API",
-    paid_amount: parseInt(expense.cost),
-    owed_share: parseInt(
-      expense.users.find((user) => user.user_id === USER_ID).owed_share
-    ),
-  }));
+  return data.map((expense) => {
+    // Backend filters expenses where the user paid (paid_share !== "0.0")
+    // Find the user who paid (has non-zero paid_share)
+    const currentUser = expense.users.find((user) => user.paid_share !== "0.0" && parseFloat(user.paid_share) > 0);
+
+    return {
+      amount: parseInt(expense.cost),
+      date: new Date(expense.date).toISOString().split("T")[0],
+      type: "Expense",
+      description: expense.description,
+      category: expense.category.name,
+      source: "Splitwise API",
+      paid_amount: parseInt(expense.cost),
+      owed_share: currentUser ? parseInt(currentUser.owed_share) : 0,
+    };
+  });
 };
 
 export {

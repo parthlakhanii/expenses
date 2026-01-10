@@ -55,6 +55,7 @@ const Settings = () => {
   const {
     enableSplitwise,
     updateEnableSplitwise,
+    refreshSettings,
     visibleColumns,
     toggleColumn,
     visibleTotals,
@@ -91,8 +92,9 @@ const Settings = () => {
 
     if (splitwiseResult === "success") {
       message.success("Splitwise account connected successfully!");
-      // Refresh status
+      // Refresh status and settings (backend auto-enables Splitwise features)
       fetchSplitwiseStatus();
+      refreshSettings();
       // Clean up URL
       navigate("/settings", { replace: true });
     } else if (splitwiseResult === "error") {
@@ -168,6 +170,8 @@ const Settings = () => {
       if (!response.data.error_status) {
         message.success("Splitwise account disconnected successfully");
         setSplitwiseConnected(false);
+        // Refresh settings to update enableSplitwise toggle (backend auto-disables it)
+        refreshSettings();
       } else {
         message.error(
           response.data.message || "Failed to disconnect Splitwise"

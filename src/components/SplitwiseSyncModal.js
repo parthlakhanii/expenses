@@ -16,6 +16,7 @@ const SplitwiseSyncModal = ({ visible, onConfirm, onCancel, isFirstSync, lastSyn
   const handleOk = () => {
     let startDate = null;
     let endDate = moment().format("YYYY-MM-DD");
+    let syncAll = false; // Flag to indicate "sync all" vs incremental
 
     switch (durationType) {
       case "since_last_sync":
@@ -49,10 +50,11 @@ const SplitwiseSyncModal = ({ visible, onConfirm, onCancel, isFirstSync, lastSyn
       default:
         startDate = null;
         endDate = null;
+        syncAll = true; // Explicitly sync all data
         break;
     }
 
-    onConfirm(startDate, endDate);
+    onConfirm(startDate, endDate, syncAll);
   };
 
   return (

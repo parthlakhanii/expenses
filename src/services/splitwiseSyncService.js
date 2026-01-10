@@ -1,12 +1,13 @@
 import { API_URL, getAuthHeaders } from '../utils/apiClient';
 import { bulkAddExpenses, getAllExpenses } from './localStorageService';
 
-export const syncSplitwise = async (startDate = null, endDate = null) => {
+export const syncSplitwise = async (startDate = null, endDate = null, syncAll = false) => {
   try {
     // Backend expects 'from' and 'to' as query parameters, not in body
     const params = new URLSearchParams();
     if (startDate) params.append('from', startDate);
     if (endDate) params.append('to', endDate);
+    if (syncAll) params.append('all', 'true'); // Flag to sync all data, not just incremental
 
     const url = `${API_URL}/api/v1/splitwise/sync${params.toString() ? '?' + params.toString() : ''}`;
 
@@ -33,12 +34,13 @@ export const syncSplitwise = async (startDate = null, endDate = null) => {
  * Fetches Splitwise expenses from backend and stores them locally
  * @param {string} startDate - Optional start date (YYYY-MM-DD)
  * @param {string} endDate - Optional end date (YYYY-MM-DD)
+ * @param {boolean} syncAll - Optional flag to sync all data (not just incremental)
  */
-export const syncSplitwiseToLocal = async (startDate = null, endDate = null) => {
+export const syncSplitwiseToLocal = async (startDate = null, endDate = null, syncAll = false) => {
   try {
     // Trigger backend sync and get the synced expenses directly
     // For local mode, backend returns processed expenses without saving to DB
-    const syncResult = await syncSplitwise(startDate, endDate);
+    const syncResult = await syncSplitwise(startDate, endDate, syncAll);
 
     // Extract the synced expenses array from the response
     // For local mode, each item is { data: expenseData, message: "...", ... }

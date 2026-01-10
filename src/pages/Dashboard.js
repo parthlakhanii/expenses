@@ -64,7 +64,6 @@ const Dashboard = () => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [chartRefreshTrigger, setChartRefreshTrigger] = useState(0);
 
-  const USER_NAME = process.env.REACT_APP_USER_NAME;
   const { RangePicker } = DatePicker;
 
   // Update expense data based on date and view
@@ -81,11 +80,11 @@ const Dashboard = () => {
     setSelectedDate(date);
 
     if (view === "splitwise") {
-      setExpenseData(await getSplitWiseExpenseByUserName(from, to, USER_NAME));
+      setExpenseData(await getSplitWiseExpenseByUserName(from, to));
     } else if (view === "dashboard") {
-      setExpenseData(await getExpensesByMonth(from, to, USER_NAME));
+      setExpenseData(await getExpensesByMonth(from, to));
     }
-  }, [USER_NAME]);
+  }, []);
 
   // Fetch sync status
   const fetchSyncStatus = useCallback(async () => {
@@ -106,6 +105,8 @@ const Dashboard = () => {
 
         if (currentView !== "budgets" && currentView !== "reconciliation" && currentView !== "settings" && currentView !== "categories") {
           updateExpenseData(selectedDate, currentView);
+          // Trigger chart refresh after sync completes
+          setChartRefreshTrigger(prev => prev + 1);
         }
       }
 
@@ -176,7 +177,7 @@ const Dashboard = () => {
   };
 
   // Perform actual sync with selected date range
-  const performSplitwiseSync = async (startDate, endDate) => {
+  const performSplitwiseSync = async (startDate, endDate, syncAll = false) => {
     setIsSyncModalOpen(false);
     setSyncing(true);
 
@@ -194,16 +195,28 @@ const Dashboard = () => {
         // First sync: Non-blocking (background)
         const syncFunction = isLocalMode ? syncSplitwiseToLocal : syncSplitwise;
 
-        syncFunction(startDate, endDate).catch((error) => {
+        syncFunction(startDate, endDate, syncAll).catch((error) => {
           console.error("Sync error:", error);
           message.error(error.message || "Failed to start Splitwise sync");
         });
 
+        // Check if user selected "All Time" (no date range)
+        const isAllTimeSync = !startDate && !endDate;
+
         // Show background message for first sync
-        message.info(
-          `Splitwise sync started in background${isLocalMode ? ' and will be stored locally' : ''}${dateRangeText}. This may take a while if you have a lot of records. You can continue using the app.`,
-          5
-        );
+        if (isAllTimeSync) {
+          // Longer message for "All Time" sync
+          message.info(
+            `Splitwise sync started in background${isLocalMode ? ' and will be stored locally' : ''}. This may take a while if you have a lot of records. You can continue using the app.`,
+            5
+          );
+        } else {
+          // Shorter message for date-range sync
+          message.info(
+            `Splitwise sync started in background${isLocalMode ? ' and will be stored locally' : ''}${dateRangeText}.`,
+            4
+          );
+        }
 
         // Update status after a moment to show "in_progress"
         setTimeout(() => {
@@ -218,7 +231,7 @@ const Dashboard = () => {
 
         // Use appropriate sync function based on storage mode
         if (isLocalMode) {
-          const result = await syncSplitwiseToLocal(startDate, endDate);
+          const result = await syncSplitwiseToLocal(startDate, endDate, syncAll);
 
           // Fetch updated status to refresh the banner
           await fetchSyncStatus();
@@ -232,7 +245,7 @@ const Dashboard = () => {
             duration: 3,
           });
         } else {
-          await syncSplitwise(startDate, endDate);
+          await syncSplitwise(startDate, endDate, syncAll);
 
           // Fetch updated status
           const updatedStatus = await fetchSyncStatus();
@@ -256,6 +269,8 @@ const Dashboard = () => {
         // Refresh expense data for both local and cloud mode
         if (currentView !== "budgets" && currentView !== "reconciliation" && currentView !== "settings" && currentView !== "categories") {
           updateExpenseData(selectedDate, currentView);
+          // Trigger chart refresh after sync completes
+          setChartRefreshTrigger(prev => prev + 1);
         }
       }
     } catch (error) {
@@ -312,10 +327,10 @@ const Dashboard = () => {
 
       if (currentView === "splitwise") {
         setExpenseData(
-          await getSplitWiseExpenseByUserName(from, to, USER_NAME)
+          await getSplitWiseExpenseByUserName(from, to)
         );
       } else if (currentView === "dashboard") {
-        setExpenseData(await getExpensesByMonth(from, to, USER_NAME));
+        setExpenseData(await getExpensesByMonth(from, to));
       }
     }
   };
