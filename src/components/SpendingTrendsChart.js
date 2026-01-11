@@ -22,8 +22,9 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
   const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("6m");
-  const [showExpenses, setShowExpenses] = useState(true);
-  const [showIncome, setShowIncome] = useState(true);
+  const [hasExpenses, setHasExpenses] = useState(false);
+  const [hasIncome, setHasIncome] = useState(false);
+  const [hasInvestment, setHasInvestment] = useState(false);
 
   const fetchTrendData = useCallback(async () => {
     setLoading(true);
@@ -38,6 +39,15 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
         periods
       );
       setTrendData(trends);
+
+      // Check if each type has any non-zero values
+      const totalExpenses = trends.reduce((sum, d) => sum + d.expenses, 0);
+      const totalIncome = trends.reduce((sum, d) => sum + d.income, 0);
+      const totalInvestment = trends.reduce((sum, d) => sum + d.investment, 0);
+
+      setHasExpenses(totalExpenses > 0);
+      setHasIncome(totalIncome > 0);
+      setHasInvestment(totalInvestment > 0);
     } catch (error) {
       console.error("Failed to fetch trend data:", error);
     } finally {
@@ -82,7 +92,7 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
           >
             {data.month}
           </p>
-          {showExpenses && (
+          {hasExpenses && (
             <p
               style={{
                 color: "#f87171",
@@ -94,16 +104,28 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
               Expenses: ${data.expenses.toFixed(2)}
             </p>
           )}
-          {showIncome && (
+          {hasIncome && (
             <p
               style={{
                 color: "#34d399",
-                margin: "4px 0 0 0",
+                margin: "4px 0",
                 fontWeight: 600,
                 fontSize: "13px",
               }}
             >
               Income: ${data.income.toFixed(2)}
+            </p>
+          )}
+          {hasInvestment && (
+            <p
+              style={{
+                color: "#60a5fa",
+                margin: "4px 0",
+                fontWeight: 600,
+                fontSize: "13px",
+              }}
+            >
+              Investment: ${data.investment.toFixed(2)}
             </p>
           )}
         </div>
@@ -168,7 +190,7 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
             width={0}
           />
           <Tooltip content={<CustomTooltip />} />
-          {showExpenses && (
+          {hasExpenses && (
             <Line
               type="monotone"
               dataKey="expenses"
@@ -179,7 +201,7 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
               name="Expenses"
             />
           )}
-          {showIncome && (
+          {hasIncome && (
             <Line
               type="monotone"
               dataKey="income"
@@ -188,6 +210,17 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
               dot={false}
               activeDot={{ r: 6 }}
               name="Income"
+            />
+          )}
+          {hasInvestment && (
+            <Line
+              type="monotone"
+              dataKey="investment"
+              stroke="#60a5fa"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 6 }}
+              name="Investment"
             />
           )}
         </LineChart>

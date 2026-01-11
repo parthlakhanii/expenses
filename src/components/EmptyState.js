@@ -5,6 +5,7 @@ import {
   FileAddOutlined,
   SyncOutlined,
   InboxOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../styles/theme";
@@ -13,6 +14,7 @@ const { Title, Text } = Typography;
 
 const EmptyState = ({
   onAddExpense,
+  onQuickAdd,
   onImportCSV,
   onSyncSplitwise,
   showSplitwiseSync = false,
@@ -32,26 +34,29 @@ const EmptyState = ({
     >
       <Card
         style={{
-          maxWidth: "500px",
+          maxWidth: "420px",
           width: "100%",
           textAlign: "center",
-          background: theme.bg.secondary,
-          border: `1px solid ${theme.border.primary}`,
-          borderRadius: "12px",
+          background: isDark ? "#0f0f0f" : "#fafafa",
+          border: "none",
+          borderRadius: "16px",
           boxShadow: isDark
-            ? "0 4px 6px -1px rgba(0,0,0,0.3)"
-            : "0 1px 3px rgba(0,0,0,0.08)",
+            ? "0 8px 32px rgba(0,0,0,0.6)"
+            : "0 2px 12px rgba(0,0,0,0.08)",
         }}
-        bodyStyle={{ padding: "48px 32px" }}
+        bodyStyle={{ padding: "40px 28px" }}
       >
-        <InboxOutlined
+        {/* <InboxOutlined
           style={{
             fontSize: "64px",
             color: theme.text.tertiary,
             marginBottom: "24px",
           }}
-        />
-        <Title level={3} style={{ color: theme.text.primary, marginBottom: "8px" }}>
+        /> */}
+        {/* <Title
+          level={3}
+          style={{ color: theme.text.primary, marginBottom: "8px" }}
+        >
           No Data Available
         </Title>
         <Text
@@ -63,10 +68,10 @@ const EmptyState = ({
             marginBottom: "32px",
           }}
         >
-          Get started by adding your first expense or importing data
-        </Text>
+          Get started by adding your first transaction or importing data
+        </Text> */}
 
-        <Space direction="vertical" size="middle" style={{ width: "100%" }}>
+        <Space direction="vertical" size={12} style={{ width: "100%" }}>
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -76,12 +81,30 @@ const EmptyState = ({
             style={{
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               border: "none",
-              height: "48px",
-              fontSize: "15px",
+              height: "44px",
+              fontSize: "14px",
               fontWeight: 500,
+              borderRadius: "10px",
             }}
           >
-            Add Expense
+            Add Transaction
+          </Button>
+
+          <Button
+            icon={<ThunderboltOutlined />}
+            size="large"
+            block
+            onClick={onQuickAdd}
+            style={{
+              height: "44px",
+              fontSize: "14px",
+              background: isDark ? "#1a1a1a" : "#ffffff",
+              border: isDark ? "1px solid #2a2a2a" : "1px solid #e5e5e5",
+              color: theme.text.primary,
+              borderRadius: "10px",
+            }}
+          >
+            Quick Add
           </Button>
 
           <Button
@@ -90,11 +113,12 @@ const EmptyState = ({
             block
             onClick={onImportCSV}
             style={{
-              height: "48px",
-              fontSize: "15px",
-              background: theme.bg.tertiary,
-              border: `1px solid ${theme.border.secondary}`,
+              height: "44px",
+              fontSize: "14px",
+              background: isDark ? "#1a1a1a" : "#ffffff",
+              border: isDark ? "1px solid #2a2a2a" : "1px solid #e5e5e5",
               color: theme.text.primary,
+              borderRadius: "10px",
             }}
           >
             Import from CSV
@@ -107,11 +131,12 @@ const EmptyState = ({
               block
               onClick={onSyncSplitwise}
               style={{
-                height: "48px",
-                fontSize: "15px",
-                background: theme.bg.tertiary,
-                border: `1px solid ${theme.border.secondary}`,
+                height: "44px",
+                fontSize: "14px",
+                background: isDark ? "#1a1a1a" : "#ffffff",
+                border: isDark ? "1px solid #2a2a2a" : "1px solid #e5e5e5",
                 color: theme.text.primary,
+                borderRadius: "10px",
               }}
             >
               Sync from Splitwise

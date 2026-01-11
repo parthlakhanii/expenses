@@ -8,6 +8,8 @@ import {
   Row,
   Col,
   message,
+  Modal,
+  Input,
 } from "antd";
 import CsvImportWizard from "../components/CsvImportWizard";
 import AddExpense from "../components/AddExpense";
@@ -17,12 +19,15 @@ import {
   RightOutlined,
   CalendarOutlined,
   MenuOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 
 import {
   getExpensesByMonth,
   calculateTotals,
+  createExpense,
 } from "../services/storageAdapter";
+import { parseExpenseInput, getExamplePlaceholders } from "../utils/nlExpenseParser";
 import { getSplitWiseExpenseByUserName } from "../services/expenseService";
 import {
   syncSplitwise,
@@ -57,6 +62,9 @@ const Dashboard = () => {
   const [isCsvImportWizardOpen, setIsCsvImportWizardOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddInput, setQuickAddInput] = useState("");
+  const [quickAddLoading, setQuickAddLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null);
   const lastSyncStatusRef = useRef(null);
@@ -327,8 +335,57 @@ const Dashboard = () => {
     setIsAddExpenseOpen(true);
   };
 
+  const handleQuickAdd = async () => {
+    if (!quickAddInput.trim()) {
+      message.warning("Please enter an expense");
+      return;
+    }
+
+    setQuickAddLoading(true);
+
+    try {
+      const parsed = parseExpenseInput(quickAddInput);
+
+      if (!parsed.isValid) {
+        message.error(parsed.error);
+        setQuickAddLoading(false);
+        return;
+      }
+
+      const expenseData = {
+        date: parsed.date,
+        amount: parsed.amount,
+        description: parsed.description,
+        type: parsed.type,
+        source: "Manual",
+      };
+
+      await createExpense(expenseData);
+
+      message.success(`Added: ${parsed.description} - $${parsed.amount}`);
+      setQuickAddInput("");
+      setIsQuickAddOpen(false);
+
+      // Refresh expense data
+      updateExpenseData(selectedDate, currentView);
+      setChartRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error("Failed to create expense:", error);
+      message.error("Failed to add expense. Please try again.");
+    } finally {
+      setQuickAddLoading(false);
+    }
+  };
+
   const handleImportSuccess = () => {
     // Refresh expense data after successful import
+    updateExpenseData(selectedDate, currentView);
+    // Trigger chart refresh
+    setChartRefreshTrigger((prev) => prev + 1);
+  };
+
+  const handleExpenseUpdate = () => {
+    // Refresh expense data after successful edit
     updateExpenseData(selectedDate, currentView);
     // Trigger chart refresh
     setChartRefreshTrigger((prev) => prev + 1);
@@ -680,11 +737,13 @@ const Dashboard = () => {
                   expenseData={expenseData}
                   view={currentView}
                   visibleColumns={visibleColumns}
+                  onExpenseUpdate={handleExpenseUpdate}
                 />
               </>
             ) : (
               <EmptyState
                 onAddExpense={openAddExpense}
+                onQuickAdd={() => setIsQuickAddOpen(true)}
                 onImportCSV={() => setIsCsvImportWizardOpen(true)}
                 onSyncSplitwise={handleSplitwiseSync}
                 showSplitwiseSync={enableSplitwise}
@@ -713,6 +772,41 @@ const Dashboard = () => {
         isFirstSync={syncStatus?.hasNeverSynced || !syncStatus?.lastSyncedAt}
         lastSyncedAt={syncStatus?.lastSyncedAt}
       />
+
+      <Modal
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ThunderboltOutlined style={{ color: "#8b5cf6" }} />
+            Quick Add Expense
+          </div>
+        }
+        open={isQuickAddOpen}
+        onOk={handleQuickAdd}
+        onCancel={() => {
+          setIsQuickAddOpen(false);
+          setQuickAddInput("");
+        }}
+        okText="Add"
+        cancelText="Cancel"
+        confirmLoading={quickAddLoading}
+        styles={{
+          body: { paddingTop: 16 },
+        }}
+      >
+        <Input
+          autoFocus
+          prefix={<ThunderboltOutlined />}
+          placeholder={getExamplePlaceholders()[0]}
+          value={quickAddInput}
+          onChange={(e) => setQuickAddInput(e.target.value)}
+          onPressEnter={handleQuickAdd}
+          size="large"
+          disabled={quickAddLoading}
+        />
+        <div style={{ marginTop: 12, fontSize: 12, color: theme.text.secondary }}>
+          Examples: "Coffee $5", "$20 lunch", "15.50 uber yesterday"
+        </div>
+      </Modal>
     </>
   );
 };

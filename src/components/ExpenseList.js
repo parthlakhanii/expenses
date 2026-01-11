@@ -74,6 +74,38 @@ const EditableCell = ({
       console.log("Save failed:", errInfo);
     }
   };
+  // Get validation rules based on field type
+  const getValidationRules = () => {
+    const baseRules = [
+      {
+        required: true,
+        message: `${title} is required.`,
+      },
+    ];
+
+    // Add number validation for amount field
+    if (dataIndex === "amount") {
+      baseRules.push({
+        validator: (_, value) => {
+          // Skip validation if value is empty (handled by required rule)
+          if (!value) {
+            return Promise.resolve();
+          }
+          const numValue = Number(value);
+          if (isNaN(numValue) || !isFinite(numValue)) {
+            return Promise.reject(new Error("Amount must be a valid number"));
+          }
+          if (numValue <= 0) {
+            return Promise.reject(new Error("Amount must be greater than 0"));
+          }
+          return Promise.resolve();
+        },
+      });
+    }
+
+    return baseRules;
+  };
+
   let childNode = children;
   if (editable) {
     childNode = editing ? (
@@ -82,12 +114,7 @@ const EditableCell = ({
           margin: 0,
         }}
         name={dataIndex}
-        rules={[
-          {
-            required: true,
-            message: `${title} is required.`,
-          },
-        ]}
+        rules={getValidationRules()}
       >
         {inputType === "select" ? (
           <Select
@@ -126,7 +153,12 @@ const EditableCell = ({
   return <td {...restProps}>{childNode}</td>;
 };
 
-const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
+const ExpenseList = ({
+  expenseData,
+  view,
+  visibleColumns = {},
+  onExpenseUpdate,
+}) => {
   const { isDark } = useTheme();
   const theme = isDark ? colors.dark : colors.light;
   const { categories } = useCategories();
@@ -171,6 +203,11 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
     deleteExpenseById(key);
     const newData = dataSource.filter((item) => item._id !== key);
     setDataSource(newData);
+
+    // Trigger chart and total refresh
+    if (onExpenseUpdate) {
+      onExpenseUpdate();
+    }
   };
 
   // Custom filter dropdown for Expense Type (without "Select All")
@@ -373,6 +410,16 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
       return;
     }
 
+    // Convert amount to number if it exists and is a string
+    if (row.amount !== undefined) {
+      const numAmount = Number(row.amount);
+      if (isNaN(numAmount) || !isFinite(numAmount)) {
+        console.error("Invalid amount value:", row.amount);
+        return;
+      }
+      row.amount = numAmount;
+    }
+
     // Compare editable fields to check if anything actually changed
     // Use String() and parseFloat() to handle type differences
     const hasChanges =
@@ -429,6 +476,11 @@ const ExpenseList = ({ expenseData, view, visibleColumns = {} }) => {
           ...updatedExpense,
         });
         setDataSource(newData);
+      }
+
+      // Trigger chart and total refresh
+      if (onExpenseUpdate) {
+        onExpenseUpdate();
       }
     } catch (error) {
       console.error("Failed to update expense:", error);

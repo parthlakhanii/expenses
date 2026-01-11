@@ -16,7 +16,13 @@ import { useResponsive } from "../hooks/useResponsive";
 import { createCategory, updateCategory } from "../services/categoryService";
 import { colors } from "../styles/theme";
 
-const CategoryFormModal = ({ open, onClose, onSuccess, category, enableSplitwise = false }) => {
+const CategoryFormModal = ({
+  open,
+  onClose,
+  onSuccess,
+  category,
+  enableSplitwise = false,
+}) => {
   const { isDark } = useTheme();
   const { isMobile } = useResponsive();
   const theme = isDark ? colors.dark : colors.light;
@@ -175,10 +181,7 @@ const CategoryFormModal = ({ open, onClose, onSuccess, category, enableSplitwise
             { max: 50, message: "Name must be less than 50 characters" },
           ]}
         >
-          <Input
-            placeholder="e.g., Work Expenses, Personal Care"
-            size="large"
-          />
+          <Input placeholder="Work Expenses, Personal Care" size="large" />
         </Form.Item>
 
         {/* Icon and Color Row */}

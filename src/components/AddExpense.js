@@ -26,6 +26,7 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
       // Set default values
       form.setFieldsValue({
         date: moment(),
+        type: "Expense",
         source: "Manual Entry",
       });
     }
@@ -51,15 +52,15 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
       // Backend handles both cloud and local mode appropriately
       await createExpense(expenseData);
 
-      message.success("Expense added successfully!");
+      message.success("Transaction added successfully!");
       form.resetFields();
       onClose();
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error("Error adding expense:", error);
-      message.error("Failed to add expense. Please try again.");
+      console.error("Error adding transaction:", error);
+      message.error("Failed to add transaction. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -67,13 +68,13 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
 
   return (
     <Modal
-      title="Add Manual Expense"
+      title="Add Transaction"
       open={open}
       onCancel={onClose}
       onOk={handleSubmit}
       confirmLoading={loading}
       width={isMobile ? "90vw" : 600}
-      okText="Add Expense"
+      okText="Add"
       cancelText="Cancel"
       destroyOnClose
     >
@@ -121,7 +122,7 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
         >
           <Input
             size="large"
-            placeholder="e.g., Grocery shopping at Costco"
+            placeholder="Grocery shopping at Costco"
             maxLength={200}
           />
         </Form.Item>

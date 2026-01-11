@@ -168,7 +168,7 @@ const SideNav = ({
           )}
           <FloatButton
             onClick={onAddExpense}
-            tooltip={<div>Add Expense</div>}
+            tooltip={<div>Add Transaction</div>}
             icon={<EditOutlined />}
           />
         </FloatButton.Group>

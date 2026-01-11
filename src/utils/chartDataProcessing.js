@@ -193,11 +193,11 @@ export const getTopCategories = (expenses, topN = 5) => {
 };
 
 /**
- * Calculate both expense and income trends with flexible time range
+ * Calculate expense, income, and investment trends with flexible time range
  * @param {Array} allTransactions - All transaction data
  * @param {string} unit - Grouping unit ('day' or 'month')
  * @param {number} periods - Number of periods to show
- * @returns {Array} Array of {month/day, expenses, income} objects
+ * @returns {Array} Array of {month/day, expenses, income, investment} objects
  */
 export const calculateExpenseIncomeTrends = (allTransactions, unit = "month", periods = 6) => {
   const trends = [];
@@ -228,7 +228,16 @@ export const calculateExpenseIncomeTrends = (allTransactions, unit = "month", pe
       );
     });
 
-    // Sum up expenses and income
+    const periodInvestment = allTransactions.filter((exp) => {
+      const expDate = moment(exp.date);
+      return (
+        exp.type === "Investment" &&
+        expDate.isSameOrAfter(periodStart) &&
+        expDate.isSameOrBefore(periodEnd)
+      );
+    });
+
+    // Sum up expenses, income, and investment
     const totalExpenses = periodExpenses.reduce(
       (sum, exp) => sum + parseFloat(exp.amount || 0),
       0
@@ -239,10 +248,16 @@ export const calculateExpenseIncomeTrends = (allTransactions, unit = "month", pe
       0
     );
 
+    const totalInvestment = periodInvestment.reduce(
+      (sum, exp) => sum + parseFloat(exp.amount || 0),
+      0
+    );
+
     trends.push({
       month: unit === "day" ? periodDate.format("MMM DD") : periodDate.format("MMM YY"),
       expenses: parseFloat(totalExpenses.toFixed(2)),
       income: parseFloat(totalIncome.toFixed(2)),
+      investment: parseFloat(totalInvestment.toFixed(2)),
     });
   }
 

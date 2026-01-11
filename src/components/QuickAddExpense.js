@@ -69,7 +69,7 @@ const QuickAddExpense = ({ open, onOpenChange, onSuccess, children }) => {
         amount: parsed.amount,
         description: parsed.description,
         type: parsed.type,
-        source: "Manual", // Source is manual entry
+        source: "Manual Entry", // Source is manual entry
         // Category will be auto-assigned by backend
       };
 

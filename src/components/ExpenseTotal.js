@@ -55,7 +55,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
 
   return (
     <Row gutter={[12, 12]} style={{ display: "flex" }}>
-      {totals.expense && (
+      {totals.expense && total.totalExpense !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
           <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
             <Statistic
@@ -71,7 +71,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
           </Card>
         </Col>
       )}
-      {totals.income && (
+      {totals.income && total.totalIncome !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
           <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
             <Statistic
@@ -86,7 +86,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
           </Card>
         </Col>
       )}
-      {totals.investment && (
+      {totals.investment && total.totalInvestment !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
           <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
             <Statistic
@@ -101,7 +101,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
           </Card>
         </Col>
       )}
-      {totals.transfer && (
+      {totals.transfer && total.totalOthers !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
           <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
             <Statistic
