@@ -1,8 +1,27 @@
 /**
- * Centralized theme colors
+ * Centralized theme colors and typography
  * Dark theme uses true blacks and grays (like LinkedIn, Discord, etc.)
  * instead of blue-tinted colors
  */
+
+// Font sizes - standard Ant Design defaults
+export const fontSize = {
+  xs: '12px',      // Extra small
+  sm: '12px',      // Small
+  base: '14px',    // Base - standard body text
+  md: '16px',      // Medium
+  lg: '16px',      // Large
+  xl: '20px',      // Extra large
+  xxl: '24px',     // 2x large
+};
+
+// Font weights
+export const fontWeight = {
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  bold: 700,
+};
 
 export const colors = {
   // Light theme
@@ -75,4 +94,69 @@ export const getColor = (isDark, path) => {
   }
 
   return value;
+};
+
+/**
+ * Get Ant Design theme configuration
+ * @param {boolean} isDark - Whether dark mode is enabled
+ */
+export const getAntdTheme = (isDark) => {
+  const themeColors = isDark ? colors.dark : colors.light;
+
+  return {
+    token: {
+      // Font sizes - standard defaults
+      fontSize: 14,           // Base font size
+      fontSizeSM: 12,         // Small
+      fontSizeLG: 16,         // Large
+      fontSizeXL: 20,         // Extra large
+      fontSizeHeading1: 38,   // H1
+      fontSizeHeading2: 30,   // H2
+      fontSizeHeading3: 24,   // H3
+      fontSizeHeading4: 20,   // H4
+      fontSizeHeading5: 16,   // H5
+
+      // Colors
+      colorBgBase: themeColors.bg.primary,
+      colorBgContainer: themeColors.bg.secondary,
+      colorBgElevated: isDark ? themeColors.bg.elevated : themeColors.bg.secondary,
+      colorBorder: themeColors.border.primary,
+      colorText: themeColors.text.primary,
+      colorTextSecondary: themeColors.text.secondary,
+      colorTextTertiary: themeColors.text.tertiary,
+
+      // Border radius
+      borderRadius: 8,
+      borderRadiusLG: 12,
+      borderRadiusSM: 6,
+    },
+    components: {
+      Button: {
+        fontSize: 14,
+        fontSizeLG: 16,
+        fontSizeSM: 12,
+      },
+      Input: {
+        fontSize: 14,
+        fontSizeLG: 16,
+        fontSizeSM: 12,
+      },
+      Select: {
+        fontSize: 14,
+        fontSizeLG: 16,
+        fontSizeSM: 12,
+      },
+      Table: {
+        fontSize: 14,
+        fontSizeSM: 12,
+      },
+      Card: {
+        fontSize: 14,
+      },
+      Statistic: {
+        titleFontSize: 14,
+        contentFontSize: 20,
+      },
+    },
+  };
 };

@@ -2,7 +2,7 @@ import React from "react";
 import { Card, Col, Row, Statistic } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
 import { useResponsive } from "../hooks/useResponsive";
-import { colors } from "../styles/theme";
+import { colors, fontSize, fontWeight } from "../styles/theme";
 
 const ExpenseTotal = ({ total, visibleTotals }) => {
   const { isDark } = useTheme();
@@ -25,19 +25,19 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
   };
 
   const cardBodyStyle = {
-    padding: "20px",
+    padding: "24px 20px",
     overflow: "hidden",
   };
 
   const titleStyle = {
     color: theme.text.secondary,
-    fontSize: "13px",
-    fontWeight: 500,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
   };
 
   const valueStyle = {
-    fontSize: "20px",
-    fontWeight: 600,
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.semibold,
     fontVariantNumeric: "tabular-nums",
     whiteSpace: "nowrap",
   };

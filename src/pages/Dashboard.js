@@ -24,7 +24,11 @@ import {
   calculateTotals,
 } from "../services/storageAdapter";
 import { getSplitWiseExpenseByUserName } from "../services/expenseService";
-import { syncSplitwise, syncSplitwiseToLocal, getSyncStatus } from "../services/splitwiseSyncService";
+import {
+  syncSplitwise,
+  syncSplitwiseToLocal,
+  getSyncStatus,
+} from "../services/splitwiseSyncService";
 import ExpenseTotal from "../components/ExpenseTotal";
 import { Content, Header } from "antd/es/layout/layout";
 import SideNav from "../components/SideNav";
@@ -41,7 +45,8 @@ import Profile from "./Profile";
 import SpendingTrendsChart from "../components/SpendingTrendsChart";
 import CategoryBreakdownChart from "../components/CategoryBreakdownChart";
 import SplitwiseSyncModal from "../components/SplitwiseSyncModal";
-import { colors } from "../styles/theme";
+import EmptyState from "../components/EmptyState";
+import { colors, fontSize, fontWeight } from "../styles/theme";
 
 const Dashboard = () => {
   const { isDark } = useTheme();
@@ -93,20 +98,30 @@ const Dashboard = () => {
       setSyncStatus(status);
 
       // If sync just completed, auto-refresh data and show message (only for background/first sync)
-      if (lastSyncStatusRef.current?.status === "in_progress" && status.status === "success") {
+      if (
+        lastSyncStatusRef.current?.status === "in_progress" &&
+        status.status === "success"
+      ) {
         // Only show toast if it was a background sync (first sync)
         // For subsequent syncs, the message is shown immediately in handleSplitwiseSync
-        const wasFirstSync = lastSyncStatusRef.current?.hasNeverSynced || !lastSyncStatusRef.current?.lastSyncedAt;
+        const wasFirstSync =
+          lastSyncStatusRef.current?.hasNeverSynced ||
+          !lastSyncStatusRef.current?.lastSyncedAt;
         if (wasFirstSync) {
           message.success(
             `First sync complete! ${status.recordsProcessed} records synced successfully.`
           );
         }
 
-        if (currentView !== "budgets" && currentView !== "reconciliation" && currentView !== "settings" && currentView !== "categories") {
+        if (
+          currentView !== "budgets" &&
+          currentView !== "reconciliation" &&
+          currentView !== "settings" &&
+          currentView !== "categories"
+        ) {
           updateExpenseData(selectedDate, currentView);
           // Trigger chart refresh after sync completes
-          setChartRefreshTrigger(prev => prev + 1);
+          setChartRefreshTrigger((prev) => prev + 1);
         }
       }
 
@@ -182,14 +197,16 @@ const Dashboard = () => {
     setSyncing(true);
 
     try {
-      const isFirstSync = syncStatus?.hasNeverSynced || !syncStatus?.lastSyncedAt;
-      const isLocalMode = storageMode === 'local';
+      const isFirstSync =
+        syncStatus?.hasNeverSynced || !syncStatus?.lastSyncedAt;
+      const isLocalMode = storageMode === "local";
 
-      const dateRangeText = startDate && endDate
-        ? ` from ${startDate} to ${endDate}`
-        : startDate
-        ? ` from ${startDate}`
-        : '';
+      const dateRangeText =
+        startDate && endDate
+          ? ` from ${startDate} to ${endDate}`
+          : startDate
+          ? ` from ${startDate}`
+          : "";
 
       if (isFirstSync) {
         // First sync: Non-blocking (background)
@@ -207,13 +224,17 @@ const Dashboard = () => {
         if (isAllTimeSync) {
           // Longer message for "All Time" sync
           message.info(
-            `Splitwise sync started in background${isLocalMode ? ' and will be stored locally' : ''}. This may take a while if you have a lot of records. You can continue using the app.`,
+            `Splitwise sync started in background${
+              isLocalMode ? " and will be stored locally" : ""
+            }. This may take a while if you have a lot of records. You can continue using the app.`,
             5
           );
         } else {
           // Shorter message for date-range sync
           message.info(
-            `Splitwise sync started in background${isLocalMode ? ' and will be stored locally' : ''}${dateRangeText}.`,
+            `Splitwise sync started in background${
+              isLocalMode ? " and will be stored locally" : ""
+            }${dateRangeText}.`,
             4
           );
         }
@@ -225,22 +246,29 @@ const Dashboard = () => {
       } else {
         // Subsequent sync: Blocking (await response)
         message.loading({
-          content: `Syncing Splitwise data${isLocalMode ? ' to local storage' : ''}${dateRangeText}...`,
-          key: "splitwise-sync"
+          content: `Syncing Splitwise data${
+            isLocalMode ? " to local storage" : ""
+          }${dateRangeText}...`,
+          key: "splitwise-sync",
         });
 
         // Use appropriate sync function based on storage mode
         if (isLocalMode) {
-          const result = await syncSplitwiseToLocal(startDate, endDate, syncAll);
+          const result = await syncSplitwiseToLocal(
+            startDate,
+            endDate,
+            syncAll
+          );
 
           // Fetch updated status to refresh the banner
           await fetchSyncStatus();
 
           // Show detailed message for local mode
           message.success({
-            content: result.synced > 0
-              ? `${result.synced} new Splitwise expense(s) synced to local storage`
-              : 'All Splitwise expenses are up to date',
+            content:
+              result.synced > 0
+                ? `${result.synced} new Splitwise expense(s) synced to local storage`
+                : "All Splitwise expenses are up to date",
             key: "splitwise-sync",
             duration: 3,
           });
@@ -253,7 +281,9 @@ const Dashboard = () => {
           // Show success message with record count
           if (updatedStatus?.status === "success") {
             message.success({
-              content: `Sync complete! ${updatedStatus.recordsProcessed || 0} records synced.`,
+              content: `Sync complete! ${
+                updatedStatus.recordsProcessed || 0
+              } records synced.`,
               key: "splitwise-sync",
               duration: 3,
             });
@@ -267,10 +297,15 @@ const Dashboard = () => {
         }
 
         // Refresh expense data for both local and cloud mode
-        if (currentView !== "budgets" && currentView !== "reconciliation" && currentView !== "settings" && currentView !== "categories") {
+        if (
+          currentView !== "budgets" &&
+          currentView !== "reconciliation" &&
+          currentView !== "settings" &&
+          currentView !== "categories"
+        ) {
           updateExpenseData(selectedDate, currentView);
           // Trigger chart refresh after sync completes
-          setChartRefreshTrigger(prev => prev + 1);
+          setChartRefreshTrigger((prev) => prev + 1);
         }
       }
     } catch (error) {
@@ -296,7 +331,7 @@ const Dashboard = () => {
     // Refresh expense data after successful import
     updateExpenseData(selectedDate, currentView);
     // Trigger chart refresh
-    setChartRefreshTrigger(prev => prev + 1);
+    setChartRefreshTrigger((prev) => prev + 1);
   };
 
   const handleMonthChange = (month) => {
@@ -326,9 +361,7 @@ const Dashboard = () => {
       const to = dates[1].format("YYYY-MM-DD");
 
       if (currentView === "splitwise") {
-        setExpenseData(
-          await getSplitWiseExpenseByUserName(from, to)
-        );
+        setExpenseData(await getSplitWiseExpenseByUserName(from, to));
       } else if (currentView === "dashboard") {
         setExpenseData(await getExpensesByMonth(from, to));
       }
@@ -351,18 +384,18 @@ const Dashboard = () => {
   }
 
   const monthOptions = [
-    { value: 0, label: "January" },
-    { value: 1, label: "February" },
-    { value: 2, label: "March" },
-    { value: 3, label: "April" },
+    { value: 0, label: "Jan" },
+    { value: 1, label: "Feb" },
+    { value: 2, label: "Mar" },
+    { value: 3, label: "Apr" },
     { value: 4, label: "May" },
-    { value: 5, label: "June" },
-    { value: 6, label: "July" },
-    { value: 7, label: "August" },
-    { value: 8, label: "September" },
-    { value: 9, label: "October" },
-    { value: 10, label: "November" },
-    { value: 11, label: "December" },
+    { value: 5, label: "Jun" },
+    { value: 6, label: "Jul" },
+    { value: 7, label: "Aug" },
+    { value: 8, label: "Sep" },
+    { value: 9, label: "Oct" },
+    { value: 10, label: "Nov" },
+    { value: 11, label: "Dec" },
   ];
 
   // set expense data in a method before calling Expense List
@@ -447,7 +480,9 @@ const Dashboard = () => {
             }}
           >
             {isMobile && (
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+              >
                 <Button
                   type="text"
                   icon={<MenuOutlined />}
@@ -469,22 +504,22 @@ const Dashboard = () => {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "10px",
+                gap: "8px",
                 background: theme.bg.secondary,
-                padding: "14px 16px",
+                padding: "10px 14px",
                 borderRadius: "12px",
                 boxShadow: isDark
                   ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
                   : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
                 border: `1px solid ${theme.border.primary}`,
-                width: isMobile ? "100%" : "380px",
+                width: isMobile ? "100%" : "280px",
               }}
             >
               <Segmented
                 options={[
                   { label: "Month", value: "monthly" },
                   {
-                    label: "Custom Range",
+                    label: "Custom",
                     value: "custom",
                     icon: <CalendarOutlined />,
                   },
@@ -540,8 +575,9 @@ const Dashboard = () => {
                       onChange={handleMonthChange}
                       style={{
                         flex: 1,
-                        fontWeight: 600,
-                        fontSize: "15px",
+                        fontWeight: fontWeight.semibold,
+                        fontSize: fontSize.md,
+                        textAlign: "center",
                       }}
                       size="large"
                       variant="borderless"
@@ -562,8 +598,9 @@ const Dashboard = () => {
                       onChange={handleYearChange}
                       style={{
                         width: 85,
-                        fontWeight: 600,
-                        fontSize: "15px",
+                        fontWeight: fontWeight.semibold,
+                        fontSize: fontSize.md,
+                        textAlign: "center",
                       }}
                       size="large"
                       variant="borderless"
@@ -605,14 +642,18 @@ const Dashboard = () => {
                 />
               )}
             </div>
-            {isMobile && totals && (
+            {isMobile && totals && expenseData && expenseData.length > 0 && (
               <div style={{ width: "100%" }}>
                 <ExpenseTotal total={totals} visibleTotals={visibleTotals} />
               </div>
             )}
             {!isMobile && (
-              <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-                {totals && <ExpenseTotal total={totals} visibleTotals={visibleTotals} />}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "24px" }}
+              >
+                {totals && expenseData && expenseData.length > 0 && (
+                  <ExpenseTotal total={totals} visibleTotals={visibleTotals} />
+                )}
               </div>
             )}
           </Header>
@@ -622,19 +663,32 @@ const Dashboard = () => {
               minHeight: "calc(100vh - 128px)",
             }}
           >
-            {/* Charts Section */}
-            <Row gutter={[16, 12]} style={{ marginBottom: 12 }}>
-              <Col xs={24} sm={24} md={12}>
-                <SpendingTrendsChart refreshTrigger={chartRefreshTrigger} />
-              </Col>
-              <Col xs={24} sm={24} md={12}>
-                <CategoryBreakdownChart expenseData={expenseData} />
-              </Col>
-            </Row>
+            {expenseData && expenseData.length > 0 ? (
+              <>
+                {/* Charts Section */}
+                <Row gutter={[16, 12]} style={{ marginBottom: 12 }}>
+                  <Col xs={24} sm={24} md={12}>
+                    <SpendingTrendsChart refreshTrigger={chartRefreshTrigger} />
+                  </Col>
+                  <Col xs={24} sm={24} md={12}>
+                    <CategoryBreakdownChart expenseData={expenseData} />
+                  </Col>
+                </Row>
 
-            {/* Expense List */}
-            {expenseData && (
-              <ExpenseList expenseData={expenseData} view={currentView} visibleColumns={visibleColumns} />
+                {/* Expense List */}
+                <ExpenseList
+                  expenseData={expenseData}
+                  view={currentView}
+                  visibleColumns={visibleColumns}
+                />
+              </>
+            ) : (
+              <EmptyState
+                onAddExpense={openAddExpense}
+                onImportCSV={() => setIsCsvImportWizardOpen(true)}
+                onSyncSplitwise={handleSplitwiseSync}
+                showSplitwiseSync={enableSplitwise}
+              />
             )}
           </Content>
         </Layout>

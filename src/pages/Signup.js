@@ -7,6 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { createPasswordCanary } from '../services/encryptionService';
 import { setPasswordCanary } from '../services/localStorageService';
+import { colors } from '../styles/theme';
 
 const { Title, Text } = Typography;
 
@@ -17,6 +18,7 @@ const Signup = () => {
   const { refreshFromLocalStorage } = useStorage();
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const theme = isDark ? colors.dark : colors.light;
   const storageMode = Form.useWatch('storageMode', form);
 
   const onFinish = async (values) => {
@@ -53,19 +55,21 @@ const Signup = () => {
         justifyContent: 'center',
         alignItems: 'center',
         minHeight: '100vh',
-        background: isDark ? '#0f172a' : '#f8fafc',
+        background: theme.bg.primary,
       }}
     >
       <Card
         style={{
           width: 400,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          background: isDark ? '#1e293b' : '#ffffff',
-          border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+          boxShadow: isDark
+            ? '0 4px 12px rgba(0,0,0,0.5)'
+            : '0 4px 12px rgba(0,0,0,0.1)',
+          background: theme.bg.secondary,
+          border: `1px solid ${theme.border.primary}`,
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={2} style={{ color: isDark ? '#e2e8f0' : '#1e293b' }}>
+          <Title level={2} style={{ color: theme.text.primary }}>
             Create Account
           </Title>
           <Text type="secondary">Sign up to get started</Text>
@@ -220,7 +224,14 @@ const Signup = () => {
               htmlType="submit"
               loading={loading}
               block
-              style={{ marginTop: 16 }}
+              style={{
+                marginTop: 16,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                color: '#ffffff',
+                height: 44,
+                fontWeight: 500,
+              }}
             >
               Sign Up
             </Button>
