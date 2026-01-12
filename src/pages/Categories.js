@@ -64,25 +64,49 @@ const Categories = ({ enableSplitwise = false }) => {
       title: "Icon",
       dataIndex: "icon",
       key: "icon",
-      width: 80,
+      width: 70,
       render: (icon) => (
-        <span style={{ fontSize: "24px" }}>{icon || "📁"}</span>
+        <div
+          style={{
+            fontSize: "28px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {icon || "📁"}
+        </div>
       ),
     },
     {
       title: "Name",
       dataIndex: "name",
       key: "name",
+      width: 250,
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (name, record) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{name}</div>
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: "14px",
+              color: theme.text.primary,
+              marginBottom: record.isDefault ? "6px" : 0,
+            }}
+          >
+            {name}
+          </div>
           {record.isDefault && (
             <Tag
-              color="blue"
               style={{
-                fontSize: "11px",
-                marginTop: "4px",
+                fontSize: "10px",
+                padding: "0px 6px",
+                borderRadius: "3px",
+                background: isDark
+                  ? "rgba(59, 130, 246, 0.1)"
+                  : "rgba(59, 130, 246, 0.1)",
+                color: isDark ? "#60a5fa" : "#3b82f6",
+                border: "none",
               }}
             >
               Default
@@ -95,21 +119,21 @@ const Categories = ({ enableSplitwise = false }) => {
       title: "Color",
       dataIndex: "color",
       key: "color",
-      width: 120,
+      width: 140,
       render: (color) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div
             style={{
-              width: "24px",
-              height: "24px",
-              borderRadius: "4px",
+              width: "28px",
+              height: "28px",
+              borderRadius: "6px",
               background: color,
               border: `1px solid ${theme.border.secondary}`,
+              boxShadow: isDark
+                ? "0 1px 3px rgba(0, 0, 0, 0.4)"
+                : "0 1px 3px rgba(0, 0, 0, 0.1)",
             }}
           />
-          <span style={{ fontSize: "12px", color: theme.text.secondary }}>
-            {color}
-          </span>
         </div>
       ),
     },
@@ -118,10 +142,10 @@ const Categories = ({ enableSplitwise = false }) => {
       dataIndex: "keywords",
       key: "keywords",
       render: (keywords) => (
-        <div style={{ maxWidth: "400px" }}>
+        <div style={{ maxWidth: "500px" }}>
           {keywords && keywords.length > 0 ? (
-            <Space wrap>
-              {keywords.slice(0, 5).map((keyword, index) => (
+            <Space wrap size={4}>
+              {keywords.slice(0, 8).map((keyword, index) => (
                 <Tag
                   key={index}
                   style={{
@@ -129,22 +153,28 @@ const Categories = ({ enableSplitwise = false }) => {
                     border: `1px solid ${theme.border.primary}`,
                     color: theme.text.primary,
                     fontSize: "11px",
+                    borderRadius: "4px",
+                    padding: "2px 8px",
+                    margin: 0,
                   }}
                 >
                   {keyword}
                 </Tag>
               ))}
-              {keywords.length > 5 && (
-                <Tooltip title={keywords.slice(5).join(", ")}>
+              {keywords.length > 8 && (
+                <Tooltip title={keywords.slice(8).join(", ")}>
                   <Tag
                     style={{
                       background: theme.border.primary,
                       border: "none",
                       color: theme.text.secondary,
                       fontSize: "11px",
+                      borderRadius: "4px",
+                      padding: "2px 8px",
+                      margin: 0,
                     }}
                   >
-                    +{keywords.length - 5} more
+                    +{keywords.length - 8}
                   </Tag>
                 </Tooltip>
               )}
@@ -158,40 +188,49 @@ const Categories = ({ enableSplitwise = false }) => {
       ),
     },
     {
-      title: "Splitwise Mapping",
-      dataIndex: "splitwiseMapping",
-      key: "splitwiseMapping",
-      width: 180,
-      show: enableSplitwise, // Only show if Splitwise is enabled
-      render: (mapping) => (
-        <div>
-          {mapping && mapping.length > 0 ? (
-            <span style={{ fontSize: "12px", color: theme.text.secondary }}>
-              {mapping.length} {mapping.length === 1 ? "mapping" : "mappings"}
-            </span>
-          ) : (
-            <span style={{ color: theme.text.tertiary, fontSize: "12px" }}>
-              None
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
       title: "Actions",
       key: "actions",
-      width: 120,
+      width: 100,
       render: (_, record) => (
-        <Space>
-          <Tooltip title="Edit Category">
+        <Space size={4}>
+          <Tooltip
+            title={
+              record.isDefault
+                ? "System categories cannot be edited"
+                : "Edit Category"
+            }
+          >
             <Button
               type="text"
-              icon={<EditOutlined />}
+              icon={<EditOutlined style={{ fontSize: "16px" }} />}
               onClick={() => handleEdit(record)}
-              style={{ color: colors.accent.primary }}
+              disabled={record.isDefault}
+              style={{
+                color: record.isDefault ? undefined : colors.accent.primary,
+                width: "32px",
+                height: "32px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             />
           </Tooltip>
-          {!record.isDefault && (
+          {record.isDefault ? (
+            <Tooltip title="System categories cannot be deleted">
+              <Button
+                type="text"
+                icon={<DeleteOutlined style={{ fontSize: "16px" }} />}
+                disabled={true}
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
+            </Tooltip>
+          ) : (
             <Popconfirm
               title="Delete Category"
               description={`Are you sure you want to delete "${record.name}"?`}
@@ -202,8 +241,15 @@ const Categories = ({ enableSplitwise = false }) => {
               <Tooltip title="Delete Category">
                 <Button
                   type="text"
-                  icon={<DeleteOutlined />}
-                  style={{ color: colors.accent.error }}
+                  icon={<DeleteOutlined style={{ fontSize: "16px" }} />}
+                  style={{
+                    color: colors.accent.error,
+                    width: "32px",
+                    height: "32px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 />
               </Tooltip>
             </Popconfirm>
@@ -213,14 +259,14 @@ const Categories = ({ enableSplitwise = false }) => {
     },
   ];
 
-  // Filter columns based on show property
-  const columns = allColumns.filter(column => column.show !== false);
-
   const cardStyle = {
     background: theme.bg.secondary,
     border: `1px solid ${theme.border.primary}`,
     borderRadius: "12px",
     minHeight: "calc(100vh - 100px)",
+    boxShadow: isDark
+      ? "0 1px 3px rgba(0, 0, 0, 0.3)"
+      : "0 1px 3px rgba(0, 0, 0, 0.05)",
   };
 
   return (
@@ -233,9 +279,11 @@ const Categories = ({ enableSplitwise = false }) => {
     >
       <Card
         title={
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <TagsOutlined />
-            <span>Category Management</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <TagsOutlined style={{ fontSize: "18px" }} />
+            <span style={{ fontSize: "16px", fontWeight: 600 }}>
+              Category Management
+            </span>
           </div>
         }
         extra={
@@ -243,6 +291,11 @@ const Categories = ({ enableSplitwise = false }) => {
             type="primary"
             icon={<PlusOutlined />}
             onClick={handleAdd}
+            style={{
+              borderRadius: "6px",
+              height: "36px",
+              fontWeight: 500,
+            }}
           >
             Add Category
           </Button>
@@ -251,7 +304,7 @@ const Categories = ({ enableSplitwise = false }) => {
         style={cardStyle}
       >
         <Table
-          columns={columns}
+          columns={allColumns}
           dataSource={categories}
           rowKey="_id"
           loading={loading}
@@ -259,6 +312,7 @@ const Categories = ({ enableSplitwise = false }) => {
             pageSize: 20,
             showSizeChanger: true,
             showTotal: (total) => `Total ${total} categories`,
+            style: { marginTop: "16px" },
           }}
           style={{
             background: theme.bg.secondary,

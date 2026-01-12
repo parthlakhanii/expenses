@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { Card } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
+import { useCategories } from "../contexts/CategoryContext";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { calculateCategoryBreakdown } from "../utils/chartDataProcessing";
 import { colors } from "../styles/theme";
@@ -8,13 +9,23 @@ import { colors } from "../styles/theme";
 const CategoryBreakdownChart = ({ expenseData }) => {
   const { isDark } = useTheme();
   const theme = isDark ? colors.dark : colors.light;
+  const { categories } = useCategories();
+
+  // Create a color map from categories
+  const categoryColorMap = useMemo(() => {
+    const map = {};
+    categories.forEach(cat => {
+      map[cat.name] = cat.color || "#94a3b8"; // fallback to slate-400
+    });
+    return map;
+  }, [categories]);
 
   const categoryData = useMemo(() => {
     return calculateCategoryBreakdown(expenseData || []);
   }, [expenseData]);
 
-  // Enhanced color palette - more vibrant and distinct
-  const COLORS = [
+  // Fallback color palette for categories not in the database
+  const FALLBACK_COLORS = [
     "#ef4444", // red-500
     "#10b981", // emerald-500
     "#3b82f6", // blue-500
@@ -26,6 +37,11 @@ const CategoryBreakdownChart = ({ expenseData }) => {
     "#f97316", // orange-500
     "#6366f1", // indigo-500
   ];
+
+  // Get color for a category
+  const getCategoryColor = (categoryName, index) => {
+    return categoryColorMap[categoryName] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+  };
 
   const cardStyle = {
     background: theme.bg.secondary,
@@ -148,7 +164,7 @@ const CategoryBreakdownChart = ({ expenseData }) => {
               {categoryData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
+                  fill={getCategoryColor(entry.category, index)}
                   stroke={theme.bg.secondary}
                   strokeWidth={2}
                   style={{

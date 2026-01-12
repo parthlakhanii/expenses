@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, message, Typography } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { useAuth } from "../contexts/AuthContext";
 import { useStorage } from "../contexts/StorageContext";
+import { useCategories } from "../contexts/CategoryContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
 import { createPasswordCanary } from "../services/encryptionService";
@@ -15,6 +16,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const { refreshFromLocalStorage } = useStorage();
+  const { refreshCategories } = useCategories();
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const theme = isDark ? colors.dark : colors.light;
@@ -27,6 +29,9 @@ const Login = () => {
     if (result.success) {
       // Refresh StorageContext to pick up latest settings from localStorage
       refreshFromLocalStorage();
+
+      // Fetch categories after successful login
+      refreshCategories();
 
       // Get user's storage mode
       const userStr = localStorage.getItem("user");

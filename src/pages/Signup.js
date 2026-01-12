@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, message, Typography, Radio, Space, Checkbox,
 import { UserOutlined, LockOutlined, MailOutlined, CloudOutlined, LaptopOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useStorage } from '../contexts/StorageContext';
+import { useCategories } from '../contexts/CategoryContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { createPasswordCanary } from '../services/encryptionService';
@@ -16,6 +17,7 @@ const Signup = () => {
   const [form] = Form.useForm();
   const { signup } = useAuth();
   const { refreshFromLocalStorage } = useStorage();
+  const { refreshCategories } = useCategories();
   const navigate = useNavigate();
   const { isDark } = useTheme();
   const theme = isDark ? colors.dark : colors.light;
@@ -29,6 +31,9 @@ const Signup = () => {
     if (result.success) {
       // Refresh StorageContext to pick up new settings
       refreshFromLocalStorage();
+
+      // Fetch categories after successful signup
+      refreshCategories();
 
       // For local mode users, create password canary for future sync verification
       if (values.storageMode === 'local') {

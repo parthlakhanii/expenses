@@ -19,11 +19,7 @@ import { useCategories } from "../contexts/CategoryContext";
 import { colors } from "../styles/theme";
 
 import "./../styles/ExpenseList.css";
-import {
-  DeleteOutlined,
-  ExclamationCircleOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
+import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
