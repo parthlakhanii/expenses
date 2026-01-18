@@ -61,11 +61,7 @@ const Settings = () => {
     visibleTotals,
     toggleTotal,
   } = useSettings();
-  const {
-    storageMode,
-    syncEnabled,
-    setSyncEnabled,
-  } = useStorage();
+  const { storageMode, syncEnabled, setSyncEnabled } = useStorage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -104,7 +100,7 @@ const Settings = () => {
       // Clean up URL
       navigate("/settings", { replace: true });
     }
-  }, [location, navigate]);
+  }, [location, navigate, refreshSettings]);
 
   // Fetch sync status when in local mode with sync enabled
   useEffect(() => {
@@ -144,7 +140,9 @@ const Settings = () => {
     try {
       // Make authenticated request to get OAuth URL
       // Token is sent in Authorization header via axios interceptor
-      const response = await axios.post(`${API_URL}/api/v1/auth/splitwise/initiate`);
+      const response = await axios.post(
+        `${API_URL}/api/v1/auth/splitwise/initiate`
+      );
 
       if (!response.data.error_status && response.data.data?.oauthUrl) {
         // Redirect to OAuth URL returned by backend
@@ -216,9 +214,7 @@ const Settings = () => {
 
   const handleToggleTotal = (totalKey) => {
     toggleTotal(totalKey);
-    message.success(
-      `Total ${!visibleTotals[totalKey] ? "shown" : "hidden"}`
-    );
+    message.success(`Total ${!visibleTotals[totalKey] ? "shown" : "hidden"}`);
   };
 
   const handleSyncEnabledChange = async (checked) => {
@@ -440,18 +436,26 @@ const Settings = () => {
 
       <Content style={contentStyle}>
         {/* Splitwise Integration */}
-        <Card title="Splitwise Integration" variant="borderless" style={cardStyle}>
+        <Card
+          title="Splitwise Integration"
+          variant="borderless"
+          style={cardStyle}
+        >
           <Spin spinning={loading}>
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
               <Space>
                 {splitwiseConnected ? (
                   <>
-                    <CheckCircleOutlined style={{ color: "#52c41a", fontSize: "18px" }} />
+                    <CheckCircleOutlined
+                      style={{ color: "#52c41a", fontSize: "18px" }}
+                    />
                     <Text style={{ color: "#52c41a" }}>Connected</Text>
                   </>
                 ) : (
                   <>
-                    <CloseCircleOutlined style={{ color: theme.text.secondary, fontSize: "18px" }} />
+                    <CloseCircleOutlined
+                      style={{ color: theme.text.secondary, fontSize: "18px" }}
+                    />
                     <Text type="secondary">Not Connected</Text>
                   </>
                 )}
@@ -482,11 +486,15 @@ const Settings = () => {
         {storageMode === "local" && (
           <Card title="Cloud Backup" variant="borderless" style={cardStyle}>
             <Space direction="vertical" size="middle" style={{ width: "100%" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "16px" }}
+              >
                 <Space>
                   <Text>Encrypted Backup</Text>
                   <Tooltip title="Zero-knowledge encryption. You enter your password each time you sync.">
-                    <InfoCircleOutlined style={{ color: theme.text.secondary }} />
+                    <InfoCircleOutlined
+                      style={{ color: theme.text.secondary }}
+                    />
                   </Tooltip>
                 </Space>
                 <Switch
@@ -497,7 +505,9 @@ const Settings = () => {
               </div>
 
               {syncEnabled && (
-                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "16px" }}
+                >
                   <Text type="secondary" style={{ fontSize: "13px" }}>
                     {lastSyncTime && lastSyncTime > 0
                       ? `Last synced ${moment(lastSyncTime).fromNow()}`

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useCallback } from "react";
 import axios from "../utils/axiosConfig";
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
@@ -41,7 +41,7 @@ export const SettingsProvider = ({ children }) => {
         };
   });
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/v1/user/settings`);
@@ -55,7 +55,7 @@ export const SettingsProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const updateEnableSplitwise = async (value) => {
     try {

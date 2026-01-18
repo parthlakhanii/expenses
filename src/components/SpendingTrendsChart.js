@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Card, Checkbox, Space } from "antd";
+import { Card } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
 import {
   LineChart,
@@ -146,7 +146,9 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
     <div
       style={{
         display: "inline-flex",
-        background: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
+        background: isDark
+          ? "rgba(255, 255, 255, 0.05)"
+          : "rgba(0, 0, 0, 0.04)",
         borderRadius: "8px",
         padding: "2px",
         gap: "2px",
@@ -160,23 +162,26 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
             padding: "6px 14px",
             border: "none",
             borderRadius: "6px",
-            background: timeRange === option.value
-              ? isDark
-                ? "rgba(255, 255, 255, 0.12)"
-                : "#ffffff"
-              : "transparent",
-            color: timeRange === option.value
-              ? theme.text.primary
-              : theme.text.tertiary,
+            background:
+              timeRange === option.value
+                ? isDark
+                  ? "rgba(255, 255, 255, 0.12)"
+                  : "#ffffff"
+                : "transparent",
+            color:
+              timeRange === option.value
+                ? theme.text.primary
+                : theme.text.tertiary,
             fontWeight: timeRange === option.value ? 600 : 500,
             fontSize: "12px",
             cursor: "pointer",
             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-            boxShadow: timeRange === option.value
-              ? isDark
-                ? "0 1px 3px rgba(0, 0, 0, 0.4)"
-                : "0 1px 2px rgba(0, 0, 0, 0.08)"
-              : "none",
+            boxShadow:
+              timeRange === option.value
+                ? isDark
+                  ? "0 1px 3px rgba(0, 0, 0, 0.4)"
+                  : "0 1px 2px rgba(0, 0, 0, 0.08)"
+                : "none",
             position: "relative",
             zIndex: timeRange === option.value ? 1 : 0,
           }}

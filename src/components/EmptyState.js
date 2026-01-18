@@ -4,13 +4,10 @@ import {
   PlusOutlined,
   FileAddOutlined,
   SyncOutlined,
-  InboxOutlined,
   ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
 import { colors } from "../styles/theme";
-
-const { Title, Text } = Typography;
 
 const EmptyState = ({
   onAddExpense,
