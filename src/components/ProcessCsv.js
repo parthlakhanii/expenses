@@ -141,7 +141,7 @@ const CollectionCreateFormModal = ({ open, onCancel, initialValues }) => {
     <Modal
       open={open}
       title="Import CSV"
-      destroyOnClose
+      destroyOnHidden
       footer={null}
       onCancel={onCancel}
     >

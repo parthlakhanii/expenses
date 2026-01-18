@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Modal,
   Form,
@@ -20,7 +20,7 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
   const [loading, setLoading] = useState(false);
   const [copyingFromPrevious, setCopyingFromPrevious] = useState(false);
   const [hasPreviousBudget, setHasPreviousBudget] = useState(false);
-  const [addCategoryFn, setAddCategoryFn] = useState(null);
+  const addCategoryFnRef = useRef(null);
   const categoryBudgets = Form.useWatch("categoryBudgets", form);
 
   const loadBudget = useCallback(async () => {
@@ -146,7 +146,7 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
           <Button
             type="dashed"
             icon={<PlusOutlined />}
-            onClick={() => addCategoryFn && addCategoryFn()}
+            onClick={() => addCategoryFnRef.current && addCategoryFnRef.current()}
             style={{ flex: 1 }}
           >
             Add Category
@@ -168,6 +168,7 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
             precision={2}
             min={0}
             placeholder="0.00"
+            controls={false}
           />
         </Form.Item>
 
@@ -179,35 +180,45 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
         <Form.List name="categoryBudgets">
           {(fields, { add, remove }) => {
             // Store the add function reference
-            if (!addCategoryFn) {
-              setAddCategoryFn(() => add);
-            }
+            addCategoryFnRef.current = add;
 
             return (
               <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space
-                    key={key}
-                    style={{ display: "flex", marginBottom: 8 }}
-                    align="baseline"
-                  >
-                    <Form.Item
-                      {...restField}
-                      name={[name, "category"]}
-                      rules={[{ required: true, message: "Select category" }]}
+                {fields.map(({ key, name, ...restField }) => {
+                  // Get already selected categories except the current row
+                  const selectedCategories = (categoryBudgets || [])
+                    .filter((_, index) => index !== name)
+                    .map((item) => item?.category)
+                    .filter(Boolean);
+
+                  // Filter out already selected categories
+                  const availableCategories = categories.filter(
+                    (cat) => !selectedCategories.includes(cat.name)
+                  );
+
+                  return (
+                    <Space
+                      key={key}
+                      style={{ display: "flex", marginBottom: 8 }}
+                      align="baseline"
                     >
-                      <Select
-                        placeholder="Category"
-                        style={{ width: 200 }}
-                        showSearch
+                      <Form.Item
+                        {...restField}
+                        name={[name, "category"]}
+                        rules={[{ required: true, message: "Select category" }]}
                       >
-                        {categories.map((cat) => (
-                          <Select.Option key={cat.name} value={cat.name}>
-                            {cat.icon} {cat.name}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
+                        <Select
+                          placeholder="Category"
+                          style={{ width: 200 }}
+                          showSearch
+                        >
+                          {availableCategories.map((cat) => (
+                            <Select.Option key={cat.name} value={cat.name}>
+                              {cat.icon} {cat.name}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
                     <Form.Item
                       {...restField}
                       name={[name, "amount"]}
@@ -219,11 +230,13 @@ const BudgetForm = ({ open, onClose, onSuccess, month, year }) => {
                         min={0}
                         placeholder="0.00"
                         style={{ width: 150 }}
+                        controls={false}
                       />
                     </Form.Item>
                     <DeleteOutlined onClick={() => remove(name)} />
                   </Space>
-                ))}
+                  );
+                })}
               </>
             );
           }}

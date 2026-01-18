@@ -118,7 +118,7 @@ const CategoryBreakdownChart = ({ expenseData }) => {
 
   if (!categoryData || categoryData.length === 0) {
     return (
-      <Card title="Category Breakdown" bordered={false} style={cardStyle} headStyle={{ borderBottom: "none" }}>
+      <Card title="Category Breakdown" variant="borderless" style={cardStyle} styles={{ header: { borderBottom: "none" } }}>
         <div
           style={{
             height: 320,
@@ -143,7 +143,7 @@ const CategoryBreakdownChart = ({ expenseData }) => {
   }
 
   return (
-    <Card title="Category Breakdown" bordered={false} style={cardStyle} headStyle={{ borderBottom: "none" }}>
+    <Card title="Category Breakdown" variant="borderless" style={cardStyle} styles={{ header: { borderBottom: "none" } }}>
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
         <ResponsiveContainer width="100%" height={320}>
           <PieChart>

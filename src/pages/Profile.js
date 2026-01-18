@@ -68,7 +68,7 @@ const Profile = () => {
 
       <Content style={contentStyle}>
         {/* Profile Card */}
-        <Card bordered={false} style={cardStyle}>
+        <Card variant="borderless" style={cardStyle}>
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
             {/* Avatar and Name Section */}
             <div style={{ textAlign: "center", padding: "24px 0" }}>

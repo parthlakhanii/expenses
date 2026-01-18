@@ -209,7 +209,7 @@ const Reconciliation = () => {
         {transactions && (
           <div style={{ display: "flex", gap: "12px" }}>
             <Card
-              bordered={false}
+              variant="borderless"
               style={{
                 background: theme.bg.secondary,
                 border: `1px solid ${theme.border.primary}`,
@@ -219,8 +219,8 @@ const Reconciliation = () => {
                   ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
                   : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
               }}
-              bodyStyle={{
-                padding: "20px",
+              styles={{
+                body: { padding: "20px" },
               }}
             >
               <Statistic
@@ -234,7 +234,7 @@ const Reconciliation = () => {
               />
             </Card>
             <Card
-              bordered={false}
+              variant="borderless"
               style={{
                 background: theme.bg.secondary,
                 border: `1px solid ${theme.border.primary}`,
@@ -244,8 +244,8 @@ const Reconciliation = () => {
                   ? "0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2)"
                   : "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
               }}
-              bodyStyle={{
-                padding: "20px",
+              styles={{
+                body: { padding: "20px" },
               }}
             >
               <Statistic

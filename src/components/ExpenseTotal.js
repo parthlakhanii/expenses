@@ -57,7 +57,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
     <Row gutter={[12, 12]} style={{ display: "flex" }}>
       {totals.expense && total.totalExpense !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
-          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+          <Card variant="borderless" style={cardStyleWithWidth} styles={{ body: cardBodyStyle }}>
             <Statistic
               title="Expense"
               value={total.totalExpense}
@@ -73,7 +73,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
       )}
       {totals.income && total.totalIncome !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
-          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+          <Card variant="borderless" style={cardStyleWithWidth} styles={{ body: cardBodyStyle }}>
             <Statistic
               title="Income"
               value={total.totalIncome}
@@ -88,7 +88,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
       )}
       {totals.investment && total.totalInvestment !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
-          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+          <Card variant="borderless" style={cardStyleWithWidth} styles={{ body: cardBodyStyle }}>
             <Statistic
               title="Investment"
               value={total.totalInvestment}
@@ -103,7 +103,7 @@ const ExpenseTotal = ({ total, visibleTotals }) => {
       )}
       {totals.transfer && total.totalOthers !== 0 && (
         <Col {...colProps} style={!(isMobile || isTablet) ? { flex: "1 1 auto" } : {}}>
-          <Card bordered={false} style={cardStyleWithWidth} bodyStyle={cardBodyStyle}>
+          <Card variant="borderless" style={cardStyleWithWidth} styles={{ body: cardBodyStyle }}>
             <Statistic
               title="Transfer"
               value={total.totalOthers}

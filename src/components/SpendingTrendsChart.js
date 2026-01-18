@@ -141,37 +141,72 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
     { label: "All", value: "all" },
   ];
 
+  // Wealthsimple-style time selector component
+  const TimeSelector = () => (
+    <div
+      style={{
+        display: "inline-flex",
+        background: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.04)",
+        borderRadius: "8px",
+        padding: "2px",
+        gap: "2px",
+      }}
+    >
+      {timeRangeOptions.map((option) => (
+        <button
+          key={option.value}
+          onClick={() => setTimeRange(option.value)}
+          style={{
+            padding: "6px 14px",
+            border: "none",
+            borderRadius: "6px",
+            background: timeRange === option.value
+              ? isDark
+                ? "rgba(255, 255, 255, 0.12)"
+                : "#ffffff"
+              : "transparent",
+            color: timeRange === option.value
+              ? theme.text.primary
+              : theme.text.tertiary,
+            fontWeight: timeRange === option.value ? 600 : 500,
+            fontSize: "12px",
+            cursor: "pointer",
+            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: timeRange === option.value
+              ? isDark
+                ? "0 1px 3px rgba(0, 0, 0, 0.4)"
+                : "0 1px 2px rgba(0, 0, 0, 0.08)"
+              : "none",
+            position: "relative",
+            zIndex: timeRange === option.value ? 1 : 0,
+          }}
+          onMouseEnter={(e) => {
+            if (timeRange !== option.value) {
+              e.target.style.color = theme.text.secondary;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (timeRange !== option.value) {
+              e.target.style.color = theme.text.tertiary;
+            }
+          }}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <Card
       title="Cash Flow"
-      bordered={false}
+      variant="borderless"
       style={cardStyle}
       loading={loading}
-      headStyle={{ borderBottom: "none" }}
-      // extra={
-      //   <Space size="small">
-      //     <Checkbox
-      //       checked={showExpenses}
-      //       onChange={(e) => setShowExpenses(e.target.checked)}
-      //       style={{
-      //         color: isDark ? "#94a3b8" : "#64748b",
-      //       }}
-      //     >
-      //       <span style={{ color: "#f87171", fontWeight: 500 }}>Expenses</span>
-      //     </Checkbox>
-      //     <Checkbox
-      //       checked={showIncome}
-      //       onChange={(e) => setShowIncome(e.target.checked)}
-      //       style={{
-      //         color: isDark ? "#94a3b8" : "#64748b",
-      //       }}
-      //     >
-      //       <span style={{ color: "#34d399", fontWeight: 500 }}>Income</span>
-      //     </Checkbox>
-      //   </Space>
-      // }
+      styles={{ header: { borderBottom: "none" } }}
+      extra={<TimeSelector />}
     >
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={350}>
         <LineChart
           data={trendData}
           margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
@@ -225,60 +260,6 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
           )}
         </LineChart>
       </ResponsiveContainer>
-
-      {/* Time range selector at bottom */}
-      <div
-        style={{
-          marginTop: 20,
-          display: "flex",
-          justifyContent: "center",
-          gap: "8px",
-          paddingBottom: 12,
-        }}
-      >
-        {timeRangeOptions.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => setTimeRange(option.value)}
-            style={{
-              padding: "6px 16px",
-              border: "none",
-              borderRadius: "8px",
-              background:
-                timeRange === option.value
-                  ? isDark
-                    ? "#404040"
-                    : "#64748b"
-                  : theme.bg.tertiary,
-              color:
-                timeRange === option.value ? "#ffffff" : theme.text.secondary,
-              fontWeight: timeRange === option.value ? 600 : 500,
-              fontSize: "13px",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              minWidth: "52px",
-              boxShadow:
-                timeRange === option.value
-                  ? isDark
-                    ? "0 2px 6px rgba(0, 0, 0, 0.6)"
-                    : "0 2px 6px rgba(100, 116, 139, 0.3)"
-                  : "none",
-            }}
-            onMouseEnter={(e) => {
-              if (timeRange !== option.value) {
-                e.target.style.background = theme.border.primary;
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (timeRange !== option.value) {
-                e.target.style.background = theme.bg.tertiary;
-              }
-            }}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
     </Card>
   );
 };

@@ -1,40 +1,44 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from '../utils/axiosConfig';
+import React, { createContext, useState, useContext, useEffect } from "react";
+import axios from "../utils/axiosConfig";
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:3001";
 
 const SettingsContext = createContext();
 
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {
-    throw new Error('useSettings must be used within a SettingsProvider');
+    throw new Error("useSettings must be used within a SettingsProvider");
   }
   return context;
 };
 
 export const SettingsProvider = ({ children }) => {
-  const [enableSplitwise, setEnableSplitwise] = useState(true);
+  const [enableSplitwise, setEnableSplitwise] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Column visibility settings (localStorage only, not backend)
   const [visibleColumns, setVisibleColumns] = useState(() => {
-    const saved = localStorage.getItem('dashboardVisibleColumns');
-    return saved ? JSON.parse(saved) : {
-      expenseType: true,
-      dataSource: false,
-    };
+    const saved = localStorage.getItem("dashboardVisibleColumns");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          expenseType: true,
+          dataSource: false,
+        };
   });
 
   // Totals visibility settings (localStorage only, not backend)
   const [visibleTotals, setVisibleTotals] = useState(() => {
-    const saved = localStorage.getItem('dashboardVisibleTotals');
-    return saved ? JSON.parse(saved) : {
-      expense: true,
-      income: true,
-      investment: false,
-      transfer: false,
-    };
+    const saved = localStorage.getItem("dashboardVisibleTotals");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          expense: true,
+          income: true,
+          investment: false,
+          transfer: false,
+        };
   });
 
   const fetchSettings = async () => {
@@ -42,10 +46,12 @@ export const SettingsProvider = ({ children }) => {
       setLoading(true);
       const response = await axios.get(`${API_URL}/api/v1/user/settings`);
       if (!response.data.error_status) {
-        setEnableSplitwise(response.data.data.settings.enableSplitwise ?? true);
+        setEnableSplitwise(
+          response.data.data.settings.enableSplitwise || false
+        );
       }
     } catch (error) {
-      console.error('Error fetching user settings:', error);
+      console.error("Error fetching user settings:", error);
     } finally {
       setLoading(false);
     }
@@ -64,8 +70,8 @@ export const SettingsProvider = ({ children }) => {
         return { success: false, message: response.data.message };
       }
     } catch (error) {
-      console.error('Error updating settings:', error);
-      return { success: false, message: 'Failed to update settings' };
+      console.error("Error updating settings:", error);
+      return { success: false, message: "Failed to update settings" };
     }
   };
 
@@ -75,7 +81,10 @@ export const SettingsProvider = ({ children }) => {
       [columnKey]: !visibleColumns[columnKey],
     };
     setVisibleColumns(newVisibleColumns);
-    localStorage.setItem('dashboardVisibleColumns', JSON.stringify(newVisibleColumns));
+    localStorage.setItem(
+      "dashboardVisibleColumns",
+      JSON.stringify(newVisibleColumns)
+    );
   };
 
   const toggleTotal = (totalKey) => {
@@ -84,12 +93,15 @@ export const SettingsProvider = ({ children }) => {
       [totalKey]: !visibleTotals[totalKey],
     };
     setVisibleTotals(newVisibleTotals);
-    localStorage.setItem('dashboardVisibleTotals', JSON.stringify(newVisibleTotals));
+    localStorage.setItem(
+      "dashboardVisibleTotals",
+      JSON.stringify(newVisibleTotals)
+    );
   };
 
   useEffect(() => {
     // Only fetch settings if user is logged in
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       fetchSettings();
     } else {

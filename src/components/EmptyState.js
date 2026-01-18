@@ -44,7 +44,7 @@ const EmptyState = ({
             ? "0 8px 32px rgba(0,0,0,0.6)"
             : "0 2px 12px rgba(0,0,0,0.08)",
         }}
-        bodyStyle={{ padding: "40px 28px" }}
+        styles={{ body: { padding: "40px 28px" } }}
       >
         {/* <InboxOutlined
           style={{

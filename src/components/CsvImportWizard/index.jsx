@@ -130,7 +130,7 @@ const CsvImportWizard = ({ open, onClose, onSuccess }) => {
       footer={null}
       width={isMobile ? "95vw" : 1000}
       centered
-      destroyOnClose
+      destroyOnHidden
       maskClosable={true}
     >
       <div style={{ marginTop: 24 }}>

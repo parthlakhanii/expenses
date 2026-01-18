@@ -1,0 +1,19 @@
+Date,Amount,Description,Sub-Description,Type,Category,Tags
+2026-01-02,-45.99,Grocery shopping,Whole Foods Market,Expense,Food,groceries,weekly
+2026-01-03,-12.50,Coffee and snacks,Starbucks,Expense,Food,coffee
+2026-01-05,-85.00,Gas station,Shell,Expense,Transportation,fuel,car
+2026-01-07,3500.00,Monthly salary,Acme Corp,Income,Salary,paycheck
+2026-01-08,-120.00,Electric bill,City Power Co,Expense,Utilities,monthly,bills
+2026-01-10,-65.00,Internet service,Comcast,Expense,Utilities,monthly,bills
+2026-01-12,-250.00,Car insurance,Geico,Expense,Insurance,monthly,car
+2026-01-14,-35.75,Restaurant dinner,Olive Garden,Expense,Food,dining,weekend
+2026-01-15,-19.99,Netflix subscription,Netflix,Expense,Entertainment,subscription,monthly
+2026-01-16,-500.00,Investment contribution,Vanguard,Investment,Investments,savings
+2026-01-18,-89.00,Phone bill,Verizon,Expense,Utilities,monthly,bills
+2026-01-20,-150.00,Clothing purchase,Nordstrom,Expense,Shopping,clothes
+2026-01-22,-42.00,Gym membership,Planet Fitness,Expense,Health,fitness,monthly
+2026-01-23,-28.50,Books,Amazon,Expense,Education,books
+2026-01-25,200.00,Freelance payment,Client ABC,Income,Other Income,freelance
+2026-01-27,-75.00,Home supplies,Home Depot,Expense,Home,maintenance
+2026-01-28,-55.00,Haircut and grooming,Supercuts,Expense,Personal Care,grooming
+2026-01-30,-180.00,Flight booking,Delta Airlines,Expense,Travel,vacation

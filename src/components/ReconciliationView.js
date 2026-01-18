@@ -351,7 +351,7 @@ const ReconciliationView = ({
                 <Text type="secondary">(Not yet matched with Splitwise)</Text>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             style={cardStyle}
           >
             <Table
@@ -382,7 +382,7 @@ const ReconciliationView = ({
                 <Text type="secondary">(You paid for these)</Text>
               </Space>
             }
-            bordered={false}
+            variant="borderless"
             style={cardStyle}
           >
             <Table

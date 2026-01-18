@@ -76,7 +76,7 @@ const AddExpense = ({ open, onClose, onSuccess }) => {
       width={isMobile ? "90vw" : 600}
       okText="Add"
       cancelText="Cancel"
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" style={{ marginTop: 24 }}>
         {/* Date */}

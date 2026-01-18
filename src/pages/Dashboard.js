@@ -27,7 +27,10 @@ import {
   calculateTotals,
   createExpense,
 } from "../services/storageAdapter";
-import { parseExpenseInput, getExamplePlaceholders } from "../utils/nlExpenseParser";
+import {
+  parseExpenseInput,
+  getExamplePlaceholders,
+} from "../utils/nlExpenseParser";
 import { getSplitWiseExpenseByUserName } from "../services/expenseService";
 import {
   syncSplitwise,
@@ -344,7 +347,7 @@ const Dashboard = () => {
     setQuickAddLoading(true);
 
     try {
-      const parsed = parseExpenseInput(quickAddInput);
+      const parsed = parseExpenseInput(quickAddInput, selectedDate);
 
       if (!parsed.isValid) {
         message.error(parsed.error);
@@ -368,7 +371,7 @@ const Dashboard = () => {
 
       // Refresh expense data
       updateExpenseData(selectedDate, currentView);
-      setChartRefreshTrigger(prev => prev + 1);
+      setChartRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Failed to create expense:", error);
       message.error("Failed to add expense. Please try again.");
@@ -489,6 +492,7 @@ const Dashboard = () => {
         mobileOpen={mobileDrawerOpen}
         onMobileClose={() => setMobileDrawerOpen(false)}
         onQuickAddSuccess={handleImportSuccess}
+        selectedDate={selectedDate}
         onAddExpense={openAddExpense}
         onImportCSV={openCsvImportWizard}
         onSplitwiseSync={handleSplitwiseSync}
@@ -641,7 +645,9 @@ const Dashboard = () => {
                       options={monthOptions}
                       suffixIcon={null}
                       popupMatchSelectWidth={false}
-                      popupClassName="month-selector-dropdown"
+                      classNames={{
+                        popup: { root: "month-selector-dropdown" },
+                      }}
                     />
                     <div
                       style={{
@@ -777,7 +783,7 @@ const Dashboard = () => {
         title={
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <ThunderboltOutlined style={{ color: "#8b5cf6" }} />
-            Quick Add Expense
+            Quick Add
           </div>
         }
         open={isQuickAddOpen}
@@ -803,7 +809,9 @@ const Dashboard = () => {
           size="large"
           disabled={quickAddLoading}
         />
-        <div style={{ marginTop: 12, fontSize: 12, color: theme.text.secondary }}>
+        <div
+          style={{ marginTop: 12, fontSize: 12, color: theme.text.secondary }}
+        >
           Examples: "Coffee $5", "$20 lunch", "15.50 uber yesterday"
         </div>
       </Modal>

@@ -72,7 +72,7 @@ const PasswordPromptModal = ({
         />
       )}
 
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" onFinish={handleOk}>
         <Form.Item
           name="password"
           label="Password"

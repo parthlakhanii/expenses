@@ -29,6 +29,7 @@ const SideNav = ({
   onImportCSV,
   onSplitwiseSync,
   onQuickAddSuccess,
+  selectedDate,
   syncing,
   syncStatus,
 }) => {
@@ -71,8 +72,10 @@ const SideNav = ({
     },
   ];
 
-  // Filter menu items based on show property
-  const menuItems = allMenuItems.filter(item => item.show !== false);
+  // Filter menu items based on show property and remove the show prop to avoid DOM warning
+  const menuItems = allMenuItems
+    .filter(item => item.show !== false)
+    .map(({ show, ...item }) => item);
 
   const handleMenuClick = (key) => {
     onViewChange(key);
@@ -178,10 +181,11 @@ const SideNav = ({
           open={quickAddOpen}
           onOpenChange={setQuickAddOpen}
           onSuccess={onQuickAddSuccess}
+          defaultDate={selectedDate}
         >
           <FloatButton
             icon={<ThunderboltOutlined />}
-            tooltip={!quickAddOpen ? "Quick Add Expense" : ""}
+            tooltip={!quickAddOpen ? "Quick Add" : ""}
             type="primary"
             style={{
               position: 'absolute',
@@ -204,7 +208,6 @@ const SideNav = ({
         open={mobileOpen}
         closable={false}
         width={200}
-        bodyStyle={{ padding: 0 }}
         styles={{
           body: {
             background: theme.bg.secondary,

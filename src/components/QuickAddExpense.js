@@ -14,7 +14,7 @@ import { colors } from "../styles/theme";
  * Popover with natural language input for quickly adding expenses
  * Supports inputs like "Coffee $5", "$20 lunch", "15.50 uber yesterday"
  */
-const QuickAddExpense = ({ open, onOpenChange, onSuccess, children }) => {
+const QuickAddExpense = ({ open, onOpenChange, onSuccess, defaultDate, children }) => {
   const { isDark } = useTheme();
   const theme = isDark ? colors.dark : colors.light;
 
@@ -46,15 +46,15 @@ const QuickAddExpense = ({ open, onOpenChange, onSuccess, children }) => {
 
   const handleQuickAdd = async () => {
     if (!inputValue.trim()) {
-      message.warning("Please enter an expense");
+      message.warning("Please enter a transaction");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Parse the natural language input
-      const parsed = parseExpenseInput(inputValue);
+      // Parse the natural language input, using the selected month as default date
+      const parsed = parseExpenseInput(inputValue, defaultDate);
 
       if (!parsed.isValid) {
         message.error(parsed.error);
@@ -76,7 +76,8 @@ const QuickAddExpense = ({ open, onOpenChange, onSuccess, children }) => {
       await createExpense(expenseData);
 
       // Show success message
-      message.success(`Added: ${parsed.description} - $${parsed.amount}`);
+      const typeLabel = parsed.type === 'Income' ? 'Income' : 'Expense';
+      message.success(`${typeLabel} added: ${parsed.description} - $${parsed.amount}`);
 
       // Clear input and close popover
       setInputValue("");
@@ -108,7 +109,7 @@ const QuickAddExpense = ({ open, onOpenChange, onSuccess, children }) => {
         }}
       >
         <ThunderboltOutlined style={{ color: "#8b5cf6" }} />
-        Quick Add Expense
+        Quick Add
       </div>
       <Input
         autoFocus

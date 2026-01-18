@@ -8,9 +8,10 @@ import {
   Space,
   Button,
   Divider,
-  Tooltip,
+  Popover,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
+import EmojiPicker from "emoji-picker-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useResponsive } from "../hooks/useResponsive";
 import { createCategory, updateCategory } from "../services/categoryService";
@@ -32,6 +33,11 @@ const CategoryFormModal = ({
   const [keywordInput, setKeywordInput] = useState("");
   const [splitwiseMapping, setSplitwiseMapping] = useState([]);
   const [splitwiseInput, setSplitwiseInput] = useState("");
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+
+  // Watch form values for reactivity
+  const iconValue = Form.useWatch("icon", form);
+  const colorValue = Form.useWatch("color", form);
 
   const isEditMode = !!category;
 
@@ -48,6 +54,9 @@ const CategoryFormModal = ({
     } else if (open) {
       // Adding new category
       form.resetFields();
+      form.setFieldsValue({
+        color: "#94a3b8",
+      });
       setKeywords([]);
       setSplitwiseMapping([]);
     }
@@ -124,39 +133,10 @@ const CategoryFormModal = ({
     }
   };
 
-  // Common emoji icons for categories
-  const commonIcons = [
-    "🍽️",
-    "🛒",
-    "🚗",
-    "🛍️",
-    "🎬",
-    "💡",
-    "🏥",
-    "✈️",
-    "💪",
-    "📚",
-    "💇",
-    "🏠",
-    "🐾",
-    "🎁",
-    "📱",
-    "💰",
-    "💵",
-    "🔄",
-    "↩️",
-    "❓",
-    "🍕",
-    "☕",
-    "🎮",
-    "📦",
-    "🔧",
-    "👕",
-    "📈",
-    "💼",
-    "🎨",
-    "🏃",
-  ];
+  const handleEmojiSelect = (emojiData) => {
+    form.setFieldsValue({ icon: emojiData.emoji });
+    setEmojiPickerOpen(false);
+  };
 
   return (
     <Modal
@@ -168,66 +148,116 @@ const CategoryFormModal = ({
       width={isMobile ? "90vw" : 600}
       okText={isEditMode ? "Update" : "Create"}
       style={{
-        top: 20,
+        top: 100,
       }}
     >
-      <Form form={form} layout="vertical" style={{ marginTop: 24 }}>
-        {/* Category Name */}
-        <Form.Item
-          label="Category Name"
-          name="name"
-          rules={[
-            { required: true, message: "Please enter a category name" },
-            { max: 50, message: "Name must be less than 50 characters" },
-          ]}
+      <Form form={form} layout="vertical" style={{ marginTop: 24 }} initialValues={{ color: "#94a3b8" }}>
+        {/* Category Name with Icon and Color */}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            marginBottom: 24,
+          }}
         >
-          <Input placeholder="Work Expenses, Personal Care" size="large" />
-        </Form.Item>
-
-        {/* Icon and Color Row */}
-        <Space size="large" style={{ width: "100%" }}>
-          <Form.Item label="Icon" name="icon" style={{ flex: 1 }}>
-            <Input
-              placeholder="📁"
-              size="large"
-              maxLength={2}
-              style={{ fontSize: "24px", textAlign: "center" }}
-            />
+          <Popover
+            content={
+              <EmojiPicker
+                onEmojiClick={handleEmojiSelect}
+                theme={isDark ? "dark" : "light"}
+                width={300}
+                height={400}
+              />
+            }
+            trigger="click"
+            open={emojiPickerOpen}
+            onOpenChange={setEmojiPickerOpen}
+            placement="bottomLeft"
+          >
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                background: theme.bg.tertiary,
+                border: `1px solid ${theme.border.primary}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: iconValue ? 16 : 14,
+                cursor: "pointer",
+                transition: "all 0.2s",
+                flexShrink: 0,
+                color: theme.text.tertiary,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = theme.border.primary;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = theme.bg.tertiary;
+              }}
+            >
+              {iconValue || "😀"}
+            </div>
+          </Popover>
+          <Form.Item name="icon" hidden>
+            <Input />
           </Form.Item>
 
-          <Form.Item label="Color" name="color" style={{ flex: 1 }}>
-            <Input type="color" size="large" style={{ width: "100%" }} />
-          </Form.Item>
-        </Space>
-
-        {/* Common Icons */}
-        <div style={{ marginBottom: 24 }}>
-          <div
+          <label
             style={{
-              fontSize: "12px",
-              color: theme.text.secondary,
-              marginBottom: 8,
+              position: "relative",
+              width: 32,
+              height: 32,
+              cursor: "pointer",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: theme.bg.tertiary,
+              border: `1px solid ${theme.border.primary}`,
+              borderRadius: 6,
             }}
           >
-            Quick Icons:
-          </div>
-          <Space wrap>
-            {commonIcons.map((icon, index) => (
-              <Tooltip key={index} title="Click to use">
-                <Button
-                  type="text"
-                  onClick={() => form.setFieldsValue({ icon })}
-                  style={{
-                    fontSize: "20px",
-                    padding: "4px 8px",
-                    height: "auto",
-                  }}
-                >
-                  {icon}
-                </Button>
-              </Tooltip>
-            ))}
-          </Space>
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 4,
+                background: colorValue || "#94a3b8",
+                transition: "all 0.2s",
+              }}
+            />
+            <Form.Item
+              name="color"
+              style={{ margin: 0, position: "absolute", top: 0, left: 0 }}
+            >
+              <input
+                type="color"
+                onChange={(e) => form.setFieldsValue({ color: e.target.value })}
+                value={colorValue || "#94a3b8"}
+                style={{
+                  width: 32,
+                  height: 32,
+                  opacity: 0,
+                  cursor: "pointer",
+                  border: "none",
+                }}
+              />
+            </Form.Item>
+          </label>
+
+          <Form.Item
+            name="name"
+            rules={[
+              { required: true, message: "Please enter a category name" },
+              { max: 50, message: "Name must be less than 50 characters" },
+            ]}
+            style={{ flex: 1, marginBottom: 0 }}
+          >
+            <Input placeholder="Category name" />
+          </Form.Item>
         </div>
 
         <Divider />
@@ -270,16 +300,16 @@ const CategoryFormModal = ({
             </Button>
           </Space.Compact>
 
-          <div
-            style={{
-              minHeight: "60px",
-              padding: "12px",
-              background: theme.bg.tertiary,
-              border: `1px solid ${theme.border.primary}`,
-              borderRadius: "8px",
-            }}
-          >
-            {keywords.length > 0 ? (
+          {keywords.length > 0 && (
+            <div
+              style={{
+                minHeight: "60px",
+                padding: "12px",
+                background: theme.bg.tertiary,
+                border: `1px solid ${theme.border.primary}`,
+                borderRadius: "8px",
+              }}
+            >
               <Space wrap>
                 {keywords.map((keyword, index) => (
                   <Tag
@@ -297,19 +327,8 @@ const CategoryFormModal = ({
                   </Tag>
                 ))}
               </Space>
-            ) : (
-              <div
-                style={{
-                  color: theme.text.tertiary,
-                  fontSize: "12px",
-                  textAlign: "center",
-                  padding: "8px 0",
-                }}
-              >
-                No keywords added yet
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Splitwise Mapping Section */}

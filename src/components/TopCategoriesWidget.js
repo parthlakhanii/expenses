@@ -30,7 +30,7 @@ const TopCategoriesWidget = ({ expenseData }) => {
 
   if (!topCategories || topCategories.length === 0) {
     return (
-      <Card title="Top Categories" bordered={false} style={cardStyle}>
+      <Card title="Top Categories" variant="borderless" style={cardStyle}>
         <div
           style={{
             padding: "24px",
@@ -45,7 +45,7 @@ const TopCategoriesWidget = ({ expenseData }) => {
   }
 
   return (
-    <Card title="Top Spending Categories" bordered={false} style={cardStyle}>
+    <Card title="Top Spending Categories" variant="borderless" style={cardStyle}>
       <div style={{ padding: "8px 0" }}>
         {topCategories.map((cat, index) => (
           <div

@@ -4,13 +4,13 @@ import {
   Form,
   Input,
   Modal,
-  Popconfirm,
   Select,
   Table,
   Tag,
   Checkbox,
   Button,
   Space,
+  message,
 } from "antd";
 
 import { deleteExpenseById, updateExpense } from "../services/storageAdapter";
@@ -19,7 +19,7 @@ import { useCategories } from "../contexts/CategoryContext";
 import { colors } from "../styles/theme";
 
 import "./../styles/ExpenseList.css";
-import { DeleteOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { DeleteOutlined, ExclamationCircleOutlined, UndoOutlined } from "@ant-design/icons";
 
 const EditableContext = React.createContext(null);
 const EditableRow = ({ index, ...props }) => {
@@ -67,7 +67,7 @@ const EditableCell = ({
         ...values,
       });
     } catch (errInfo) {
-      console.log("Save failed:", errInfo);
+      // Save failed - form validation error
     }
   };
   // Get validation rules based on field type
@@ -162,6 +162,7 @@ const ExpenseList = ({
   const [editable, setEditable] = useState(false);
   const [hoveredRowId, setHoveredRowId] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const pendingDeleteRef = useRef({});
 
   // Expense type options
   const expenseTypes = [
@@ -196,14 +197,64 @@ const ExpenseList = ({
     : dataSource;
 
   const handleDelete = (key) => {
-    deleteExpenseById(key);
+    // Find the item being deleted for potential restore
+    const deletedItem = dataSource.find((item) => item._id === key);
+    if (!deletedItem) return;
+
+    // Update local state immediately for instant UI feedback
     const newData = dataSource.filter((item) => item._id !== key);
     setDataSource(newData);
 
-    // Trigger chart and total refresh
-    if (onExpenseUpdate) {
-      onExpenseUpdate();
+    // Clear any existing timeout for this item
+    if (pendingDeleteRef.current[key]) {
+      clearTimeout(pendingDeleteRef.current[key]);
     }
+
+    // Show undo message
+    const messageKey = `delete-${key}`;
+    message.info({
+      key: messageKey,
+      content: (
+        <span>
+          Deleted "{deletedItem.description}"
+          <Button
+            type="link"
+            size="small"
+            icon={<UndoOutlined />}
+            onClick={() => {
+              // Cancel the pending delete
+              clearTimeout(pendingDeleteRef.current[key]);
+              delete pendingDeleteRef.current[key];
+              // Restore the item
+              setDataSource((prev) => [...prev, deletedItem].sort((a, b) => new Date(b.date) - new Date(a.date)));
+              message.destroy(messageKey);
+              message.success("Restored");
+            }}
+            style={{ marginLeft: 8 }}
+          >
+            Undo
+          </Button>
+        </span>
+      ),
+      duration: 5,
+    });
+
+    // Set timeout to actually delete
+    pendingDeleteRef.current[key] = setTimeout(async () => {
+      try {
+        await deleteExpenseById(key);
+        delete pendingDeleteRef.current[key];
+        // Trigger chart and total refresh after delete completes
+        if (onExpenseUpdate) {
+          onExpenseUpdate();
+        }
+      } catch (error) {
+        // If delete fails, restore the item
+        setDataSource((prev) => [...prev, deletedItem].sort((a, b) => new Date(b.date) - new Date(a.date)));
+        message.error("Failed to delete");
+        console.error("Failed to delete expense:", error);
+      }
+    }, 5000);
   };
 
   // Custom filter dropdown for Expense Type (without "Select All")
@@ -378,21 +429,17 @@ const ExpenseList = ({
       dataIndex: "operation",
       render: (_, record) =>
         filteredData.length >= 1 ? (
-          <Popconfirm
-            title="Sure to delete?"
-            onConfirm={() => handleDelete(record._id)}
-          >
-            <DeleteOutlined
-              style={{
-                color: colors.accent.error,
-                fontSize: "16px",
-                cursor: "pointer",
-                visibility: hoveredRowId === record._id ? "visible" : "hidden",
-                opacity: hoveredRowId === record._id ? 1 : 0,
-                transition: "opacity 0.2s ease, visibility 0.2s ease",
-              }}
-            />
-          </Popconfirm>
+          <DeleteOutlined
+            onClick={() => handleDelete(record._id)}
+            style={{
+              color: colors.accent.error,
+              fontSize: "16px",
+              cursor: "pointer",
+              visibility: hoveredRowId === record._id ? "visible" : "hidden",
+              opacity: hoveredRowId === record._id ? 1 : 0,
+              transition: "opacity 0.2s ease, visibility 0.2s ease",
+            }}
+          />
         ) : null,
     },
   ];
@@ -402,7 +449,6 @@ const ExpenseList = ({
     const originalRecord = dataSource.find((item) => item._id === row._id);
 
     if (!originalRecord) {
-      console.warn("Original record not found for comparison");
       return;
     }
 
@@ -410,7 +456,6 @@ const ExpenseList = ({
     if (row.amount !== undefined) {
       const numAmount = Number(row.amount);
       if (isNaN(numAmount) || !isFinite(numAmount)) {
-        console.error("Invalid amount value:", row.amount);
         return;
       }
       row.amount = numAmount;
@@ -429,7 +474,6 @@ const ExpenseList = ({
 
     // Skip API call if nothing changed
     if (!hasChanges) {
-      console.log("No changes detected, skipping API call");
       return;
     }
 
@@ -479,7 +523,7 @@ const ExpenseList = ({
         onExpenseUpdate();
       }
     } catch (error) {
-      console.error("Failed to update expense:", error);
+      // Failed to update expense
     }
   };
 
@@ -546,8 +590,14 @@ const ExpenseList = ({
           rowClassName={() => "editable-row"}
           dataSource={filteredData}
           columns={columns}
+          rowKey="_id"
           showSorterTooltip={false}
           bordered={false}
+          pagination={{
+            simple: true,
+            showTotal: (total) => `${total} items`,
+            size: "small",
+          }}
           onRow={(record) => ({
             onMouseEnter: () => setHoveredRowId(record._id),
             onMouseLeave: () => setHoveredRowId(null),

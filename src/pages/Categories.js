@@ -142,7 +142,7 @@ const Categories = ({ enableSplitwise = false }) => {
       dataIndex: "keywords",
       key: "keywords",
       render: (keywords) => (
-        <div style={{ maxWidth: "500px" }}>
+        <div>
           {keywords && keywords.length > 0 ? (
             <Space wrap size={4}>
               {keywords.slice(0, 8).map((keyword, index) => (
@@ -300,7 +300,7 @@ const Categories = ({ enableSplitwise = false }) => {
             Add Category
           </Button>
         }
-        bordered={false}
+        variant="borderless"
         style={cardStyle}
       >
         <Table

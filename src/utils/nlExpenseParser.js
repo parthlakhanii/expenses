@@ -22,12 +22,24 @@ const DATE_KEYWORDS = {
   yesterday: -1,
 };
 
+const INCOME_KEYWORDS = [
+  'income',
+  'salary',
+  'earned',
+  'received',
+  'paycheck',
+  'bonus',
+  'refund',
+  'reimbursement',
+];
+
 /**
  * Parse natural language expense input
  * @param {string} inputText - Natural language input like "Coffee $5"
+ * @param {moment} defaultDate - Default date to use if none specified (defaults to today)
  * @returns {object} - Parsed expense data or error
  */
-export const parseExpenseInput = (inputText) => {
+export const parseExpenseInput = (inputText, defaultDate = null) => {
   // Validate input
   if (!inputText || typeof inputText !== 'string') {
     return {
@@ -37,13 +49,31 @@ export const parseExpenseInput = (inputText) => {
   }
 
   // Trim and normalize input
-  const normalizedInput = inputText.trim();
+  let normalizedInput = inputText.trim();
 
   if (normalizedInput.length === 0) {
     return {
       isValid: false,
-      error: 'Please enter an expense (e.g., "Coffee $5")',
+      error: 'Please enter a transaction (e.g., "Coffee $5" or "+$500 salary")',
     };
+  }
+
+  // STEP 0: Detect transaction type (Income vs Expense)
+  let transactionType = 'Expense';
+
+  // Check for + prefix (e.g., "+$500 salary" or "+ 500 bonus")
+  if (normalizedInput.startsWith('+')) {
+    transactionType = 'Income';
+    normalizedInput = normalizedInput.substring(1).trim();
+  }
+
+  // Check for income keywords
+  const lowerInput = normalizedInput.toLowerCase();
+  for (const keyword of INCOME_KEYWORDS) {
+    if (lowerInput.includes(keyword)) {
+      transactionType = 'Income';
+      break;
+    }
   }
 
   // STEP 1: Extract date first (to avoid date numbers interfering with amount extraction)
@@ -92,20 +122,34 @@ export const parseExpenseInput = (inputText) => {
 
   // 4. Try to match date keywords (yesterday, today)
   if (!expenseDate) {
-    let dateOffset = 0; // Default to today
     let dateKeywordFound = null;
 
     for (const [keyword, offset] of Object.entries(DATE_KEYWORDS)) {
       const keywordRegex = new RegExp(`\\b${keyword}\\b`, 'i');
       if (keywordRegex.test(normalizedInput)) {
-        dateOffset = offset;
+        // Keyword found - calculate relative to today
+        expenseDate = moment().add(offset, 'days').format('YYYY-MM-DD');
         dateKeywordFound = keyword;
         break;
       }
     }
 
-    // Calculate date
-    expenseDate = moment().add(dateOffset, 'days').format('YYYY-MM-DD');
+    // No date keyword found - use defaultDate or today
+    if (!dateKeywordFound) {
+      if (defaultDate && moment.isMoment(defaultDate)) {
+        // Use the first day of the selected month as a sensible default
+        // Or use the same day of month if viewing current month
+        const today = moment();
+        if (defaultDate.isSame(today, 'month')) {
+          expenseDate = today.format('YYYY-MM-DD');
+        } else {
+          // For past/future months, default to first of that month
+          expenseDate = defaultDate.clone().startOf('month').format('YYYY-MM-DD');
+        }
+      } else {
+        expenseDate = moment().format('YYYY-MM-DD');
+      }
+    }
 
     if (dateKeywordFound) {
       inputWithoutDate = normalizedInput.replace(new RegExp(`\\b${dateKeywordFound}\\b`, 'i'), '').trim();
@@ -159,7 +203,7 @@ export const parseExpenseInput = (inputText) => {
     amount: amount,
     description: description,
     date: expenseDate,
-    type: 'Expense', // Default type
+    type: transactionType,
     error: null,
   };
 };
@@ -174,9 +218,9 @@ export const getExamplePlaceholders = () => {
     '$20 lunch',
     '15.50 uber',
     'Gas 45 yesterday',
-    '$8 snack today',
-    'Dinner $30 2025-01-30',
-    '2025-01-15 Groceries $50',
-    '01/20/2025 Movie $15',
+    '+$500 salary',
+    '+100 refund',
+    'Bonus $200',
+    'Paycheck $2000',
   ];
 };

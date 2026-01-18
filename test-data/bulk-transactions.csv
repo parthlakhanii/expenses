@@ -1,0 +1,41 @@
+Date,Amount,Description,Category,Type
+2025-12-01,-45.00,Grocery Store,Food,Expense
+2025-12-01,-12.99,Streaming Service,Entertainment,Expense
+2025-12-02,-35.50,Gas Station,Transportation,Expense
+2025-12-03,2800.00,Paycheck,Salary,Income
+2025-12-03,-89.00,Electric Bill,Utilities,Expense
+2025-12-04,-22.00,Restaurant,Food,Expense
+2025-12-05,-150.00,Shopping Mall,Shopping,Expense
+2025-12-06,-8.50,Coffee Shop,Food,Expense
+2025-12-07,-55.00,Phone Bill,Utilities,Expense
+2025-12-08,-120.00,Insurance,Insurance,Expense
+2025-12-09,-18.00,Parking,Transportation,Expense
+2025-12-10,-65.00,Gym,Health,Expense
+2025-12-11,-42.00,Books,Education,Expense
+2025-12-12,-200.00,Flight Ticket,Travel,Expense
+2025-12-13,-30.00,Haircut,Personal Care,Expense
+2025-12-14,-95.00,Dinner Party,Food,Expense
+2025-12-15,500.00,Bonus,Salary,Income
+2025-12-16,-28.00,Movie Theater,Entertainment,Expense
+2025-12-17,-75.00,Home Repair,Home,Expense
+2025-12-18,-16.00,Fast Food,Food,Expense
+2025-12-19,-250.00,Car Service,Transportation,Expense
+2025-12-20,-33.00,Medicine,Health,Expense
+2025-12-21,-180.00,Hotel Booking,Travel,Expense
+2025-12-22,-48.00,Gift Shop,Shopping,Expense
+2025-12-23,-62.00,Grocery Store,Food,Expense
+2025-12-24,-25.00,Uber Ride,Transportation,Expense
+2025-12-25,100.00,Cash Gift,Other Income,Income
+2025-12-26,-88.00,Post-Christmas Sale,Shopping,Expense
+2025-12-27,-14.00,Breakfast Cafe,Food,Expense
+2025-12-28,-40.00,Gas Station,Transportation,Expense
+2025-12-29,-110.00,Internet Bill,Utilities,Expense
+2025-12-30,-55.00,New Year Supplies,Shopping,Expense
+2025-12-31,-200.00,New Year Dinner,Food,Expense
+2026-01-01,-15.00,Coffee,Food,Expense
+2026-01-02,3000.00,January Paycheck,Salary,Income
+2026-01-03,-85.00,Grocery Store,Food,Expense
+2026-01-04,-22.00,Lunch Out,Food,Expense
+2026-01-05,-45.00,Gas Station,Transportation,Expense
+2026-01-06,-12.99,Subscription,Entertainment,Expense
+2026-01-07,-95.00,Electric Bill,Utilities,Expense

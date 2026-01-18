@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Layout, Button, Card } from "antd";
-import { PlusOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { EditOutlined, LeftOutlined, RightOutlined, PlusOutlined } from "@ant-design/icons";
 import { useTheme } from "../contexts/ThemeContext";
 import moment from "moment";
 import BudgetOverview from "../components/BudgetOverview";
@@ -94,13 +94,14 @@ const Budgets = () => {
           />
         </div>
 
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setIsFormOpen(true)}
-        >
-          Set Budget
-        </Button>
+        {budgetData?.hasBudget && (
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => setIsFormOpen(true)}
+            style={{ color: theme.text.secondary }}
+          />
+        )}
       </Header>
 
       <Content style={{ padding: "12px 48px 24px 48px" }}>

@@ -440,7 +440,7 @@ const Settings = () => {
 
       <Content style={contentStyle}>
         {/* Splitwise Integration */}
-        <Card title="Splitwise Integration" bordered={false} style={cardStyle}>
+        <Card title="Splitwise Integration" variant="borderless" style={cardStyle}>
           <Spin spinning={loading}>
             <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
               <Space>
@@ -480,7 +480,7 @@ const Settings = () => {
 
         {/* Storage Mode */}
         {storageMode === "local" && (
-          <Card title="Cloud Backup" bordered={false} style={cardStyle}>
+          <Card title="Cloud Backup" variant="borderless" style={cardStyle}>
             <Space direction="vertical" size="middle" style={{ width: "100%" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                 <Space>
@@ -524,7 +524,7 @@ const Settings = () => {
         )}
 
         {/* Preferences */}
-        <Card title="Appearance" bordered={false} style={cardStyle}>
+        <Card title="Appearance" variant="borderless" style={cardStyle}>
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
               <Text strong style={{ display: "block", marginBottom: "12px" }}>
@@ -545,7 +545,7 @@ const Settings = () => {
         </Card>
 
         {/* Dashboard Settings */}
-        <Card title="Dashboard" bordered={false} style={cardStyle}>
+        <Card title="Dashboard" variant="borderless" style={cardStyle}>
           <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
               <Text strong style={{ display: "block", marginBottom: "12px" }}>
