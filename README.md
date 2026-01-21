@@ -1,4 +1,4 @@
-# Personal Finance & Expense Tracker
+# Personal Finance & Expense Tracker [[Demo](https://appexpenses.vercel.app)]
 
 A React-based personal finance dashboard for tracking expenses across multiple financial accounts and integrating with Splitwise for shared expenses.
 
