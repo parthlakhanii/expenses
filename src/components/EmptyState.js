@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Card, Space, Typography } from "antd";
+import { Button, Card, Space } from "antd";
 import {
   PlusOutlined,
   FileAddOutlined,

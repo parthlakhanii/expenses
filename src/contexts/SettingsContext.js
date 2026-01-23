@@ -107,7 +107,7 @@ export const SettingsProvider = ({ children }) => {
     } else {
       setLoading(false);
     }
-  }, []);
+  }, [fetchSettings]);
 
   const value = {
     enableSplitwise,

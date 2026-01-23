@@ -126,6 +126,18 @@ const Login = () => {
               Don't have an account? <Link to="/signup">Sign up</Link>
             </Text>
           </div>
+
+          <div style={{ textAlign: "center", marginTop: 16 }}>
+            <Link
+              to="/demo"
+              style={{
+                color: theme.text.secondary,
+                fontSize: 13,
+              }}
+            >
+              Try Demo
+            </Link>
+          </div>
         </Form>
       </Card>
     </div>

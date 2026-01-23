@@ -6,9 +6,6 @@ import { ReactComponent as SplitwiseIcon } from "../styles/splitwise-icon.svg";
 
 const SideMenu = ({ onMenuClick }) => {
   const [collapsed, setCollapsed] = useState(true);
-  const toggleCollapsed = () => {
-    setCollapsed(!collapsed);
-  };
   const items = [
     {
       key: "1",

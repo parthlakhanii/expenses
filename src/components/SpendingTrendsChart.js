@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Card } from "antd";
 import { useTheme } from "../contexts/ThemeContext";
+import { useSettings } from "../contexts/SettingsContext";
 import {
   LineChart,
   Line,
@@ -18,6 +19,7 @@ import { colors } from "../styles/theme";
 
 const SpendingTrendsChart = ({ refreshTrigger }) => {
   const { isDark } = useTheme();
+  const { visibleTotals } = useSettings();
   const theme = isDark ? colors.dark : colors.light;
   const [trendData, setTrendData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,7 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
               Income: ${data.income.toFixed(2)}
             </p>
           )}
-          {hasInvestment && (
+          {hasInvestment && visibleTotals.investment && (
             <p
               style={{
                 color: "#60a5fa",
@@ -252,7 +254,7 @@ const SpendingTrendsChart = ({ refreshTrigger }) => {
               name="Income"
             />
           )}
-          {hasInvestment && (
+          {hasInvestment && visibleTotals.investment && (
             <Line
               type="monotone"
               dataKey="investment"

@@ -11,6 +11,7 @@ import {
   Modal,
   Input,
 } from "antd";
+import { useNavigate } from "react-router-dom";
 import CsvImportWizard from "../components/CsvImportWizard";
 import AddExpense from "../components/AddExpense";
 import ExpenseList from "../components/ExpenseList";
@@ -61,7 +62,9 @@ const Dashboard = () => {
   const { enableSplitwise, visibleColumns, visibleTotals } = useSettings();
   const { storageMode } = useStorage();
   const { isMobile } = useResponsive();
+  const navigate = useNavigate();
   const theme = isDark ? colors.dark : colors.light;
+  const isDemoMode = sessionStorage.getItem("isDemoMode") === "true";
   const [isCsvImportWizardOpen, setIsCsvImportWizardOpen] = useState(false);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
@@ -458,6 +461,12 @@ const Dashboard = () => {
     { value: 11, label: "Dec" },
   ];
 
+  const handleSignupFromDemo = () => {
+    // Clear demo mode and navigate to signup
+    sessionStorage.removeItem("isDemoMode");
+    navigate("/signup");
+  };
+
   // set expense data in a method before calling Expense List
   return (
     <>
@@ -705,15 +714,44 @@ const Dashboard = () => {
                 />
               )}
             </div>
-            {isMobile && totals && expenseData && expenseData.length > 0 && (
-              <div style={{ width: "100%" }}>
-                <ExpenseTotal total={totals} visibleTotals={visibleTotals} />
+            {isMobile && (
+              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
+                {isDemoMode && (
+                  <Button
+                    size="small"
+                    onClick={handleSignupFromDemo}
+                    style={{
+                      background: theme.bg.secondary,
+                      border: `1px solid ${theme.border.primary}`,
+                      color: theme.text.primary,
+                      alignSelf: "flex-end",
+                    }}
+                  >
+                    Create Account
+                  </Button>
+                )}
+                {totals && expenseData && expenseData.length > 0 && (
+                  <ExpenseTotal total={totals} visibleTotals={visibleTotals} />
+                )}
               </div>
             )}
             {!isMobile && (
               <div
-                style={{ display: "flex", alignItems: "center", gap: "24px" }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}
               >
+                {isDemoMode && (
+                  <Button
+                    size="small"
+                    onClick={handleSignupFromDemo}
+                    style={{
+                      background: theme.bg.secondary,
+                      border: `1px solid ${theme.border.primary}`,
+                      color: theme.text.primary,
+                    }}
+                  >
+                    Create Account
+                  </Button>
+                )}
                 {totals && expenseData && expenseData.length > 0 && (
                   <ExpenseTotal total={totals} visibleTotals={visibleTotals} />
                 )}

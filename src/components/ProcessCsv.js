@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Form, message, Modal, Upload, Select, Input } from "antd";
+import { Form, message, Modal, Upload, Select } from "antd";
 import { InboxOutlined } from "@ant-design/icons";
 import axios from "axios";
 
@@ -14,7 +14,7 @@ const CollectionCreateForm = ({
   const [form] = Form.useForm();
   useEffect(() => {
     onFormInstanceReady(form);
-  }, []);
+  }, [form, onFormInstanceReady]);
 
   const normFile = (e) => {
     console.log("Upload event:", e);
@@ -24,40 +24,8 @@ const CollectionCreateForm = ({
     return e?.fileList;
   };
 
-  const props = {
-    name: "file",
-    multiple: false,
-    accept: ".csv",
-    headers: {
-      token: "token",
-      "Content-Type": "multipart/form-data",
-      // boundary: "WebKitFormBoundary1ETilgImp3YsXW06",
-    },
-    data(file) {
-      const formData = new FormData();
-      formData.set("type", "credit");
-      formData.set("CSV", file);
-    },
-    action: `${API_URL}/api/v1/processCsv`,
-    onChange(info) {
-      const { status, originFileObj } = info.file;
-      if (status !== "uploading") {
-        console.log(info.file, info.fileList);
-      }
-      if (status === "done") {
-        message.success(`${info.file.name} file uploaded successfully.`);
-      } else if (status === "error") {
-        message.error(`${info.file.name} file upload failed.`);
-      }
-      console.log("originFileObj ", originFileObj);
-    },
-    onDrop(e) {
-      console.log("Dropped files", e.dataTransfer.files);
-    },
-  };
-
   const [csvType, setCsvType] = useState(null);
-  const [fileSource, setFileSource] = useState("");
+  const [fileSource] = useState("");
 
   const handleCsvTypeChange = (value) => {
     setCsvType(value);
@@ -75,10 +43,7 @@ const CollectionCreateForm = ({
       },
     };
     try {
-      const response = await axios
-        .post(`${API_URL}/api/v1/processCsv`, data, config)
-        .then();
-      // onSuccess(expenseService.GetAllData());
+      await axios.post(`${API_URL}/api/v1/processCsv`, data, config);
       message.success("Yay!!");
       onCancel();
     } catch (error) {
@@ -136,7 +101,6 @@ const CollectionCreateForm = ({
   );
 };
 const CollectionCreateFormModal = ({ open, onCancel, initialValues }) => {
-  const [formInstance, setFormInstance] = useState();
   return (
     <Modal
       open={open}
@@ -147,9 +111,7 @@ const CollectionCreateFormModal = ({ open, onCancel, initialValues }) => {
     >
       <CollectionCreateForm
         initialValues={initialValues}
-        onFormInstanceReady={(instance) => {
-          setFormInstance(instance);
-        }}
+        onFormInstanceReady={() => {}}
         onCancel={onCancel}
       />
     </Modal>
